@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { shiftMonth } from '@/lib/month';
 import type { MonthInput, Reading, Service as CalcService, Tariff as CalcTariff } from '@/lib/calc/types';
@@ -84,4 +84,26 @@ export async function loadMonthInput(accountId: string, month: string): Promise<
       })),
     },
   };
+}
+
+export type InvoiceSnapshot = {
+  tenantName: string; objectName: string; share: number;
+  lines: import('@/lib/calc/types').BillLine[];
+  meters: import('@/lib/calc/types').MeterUse[];
+};
+
+/** Выставленные счета аккаунта (по месяцу или все), новые сверху. */
+export async function listInvoices(accountId: string, month?: string) {
+  const where = month
+    ? and(eq(schema.invoices.accountId, accountId), eq(schema.invoices.month, month))
+    : eq(schema.invoices.accountId, accountId);
+  return db.select({
+    id: schema.invoices.id, tenantId: schema.invoices.tenantId, month: schema.invoices.month, number: schema.invoices.number,
+    issuedOn: schema.invoices.issuedOn, total: schema.invoices.total, paidOn: schema.invoices.paidOn, lines: schema.invoices.lines,
+    tenantName: schema.tenants.name, objectName: schema.objects.short, objectId: schema.objects.id,
+  }).from(schema.invoices)
+    .innerJoin(schema.tenants, eq(schema.tenants.id, schema.invoices.tenantId))
+    .innerJoin(schema.objects, eq(schema.objects.id, schema.tenants.objectId))
+    .where(where)
+    .orderBy(desc(schema.invoices.month), desc(schema.invoices.createdAt));
 }

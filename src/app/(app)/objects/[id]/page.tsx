@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Building2 } from 'lucide-react';
+import { Building2, FileText } from 'lucide-react';
 import { requireUser } from '@/lib/auth/session';
-import { loadMonthInput } from '@/lib/data';
+import { listInvoices, loadMonthInput } from '@/lib/data';
 import { activeTariff, calculateMonth } from '@/lib/calc/engine';
 import { fmtMoney, rubWords } from '@/lib/calc/format';
 import type { BillLine } from '@/lib/calc/types';
@@ -17,7 +17,8 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
   const sp = await searchParams;
   const user = await requireUser();
   const month = isMonth(sp.m) ? sp.m : defaultMonth();
-  const { input, objects } = await loadMonthInput(user.accountId, month);
+  const [{ input, objects }, invoices] = await Promise.all([loadMonthInput(user.accountId, month), listInvoices(user.accountId, month)]);
+  const issued = new Set(invoices.map((i) => i.tenantId));
   const obj = objects.find((o) => o.id === id);
   if (!obj) notFound();
   const res = calculateMonth(input);
@@ -29,6 +30,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
   const own = res.owner[obj.id];
   const statusOf = (tid: string) => {
     const b = res.tenants[tid];
+    if (issued.has(tid)) return { text: 'Счёт выставлен', cls: 'bg-ok-soft text-ok' };
     if (!b || !b.serviceCount) return { text: 'Нет услуг', cls: 'bg-[#eef0f3] text-[#3a475d]' };
     return b.missing.length ? { text: 'Нет показаний', cls: 'bg-bad-soft text-bad' } : { text: 'Готов к счёту', cls: 'bg-[#e3eaf7] text-[#1d4596]' };
   };
@@ -145,6 +147,10 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
                 <b className="font-bold">Итого к оплате</b><span className="text-[22px] font-bold">{fmtMoney(bill.total)} ₽</span>
               </div>
               <div className="hint">{rubWords(bill.total)}. Без НДС.</div>
+            </div>
+            <div className="mt-auto flex flex-wrap gap-2 border-t border-line px-[18px] py-3.5">
+              <Link href={`/report/${tenant.id}?m=${month}`} target="_blank" className="btn btn-primary"><FileText size={16} /> Отчёт PDF</Link>
+              {issued.has(tenant.id) ? <Link href="/bills/issued" className="btn">Счёт выставлен →</Link> : <Link href={`/bills?m=${month}`} className="btn">К выставлению →</Link>}
             </div>
           </section>
         ) : <div />}

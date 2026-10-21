@@ -41,3 +41,8 @@ body { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
   .eyebrow { @apply text-[12px] font-semibold uppercase tracking-[0.06em] text-ink; }
   .hint { @apply text-[12px] text-muted; }
 }
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff; }
+}

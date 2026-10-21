@@ -1,0 +1,11 @@
+{
+  "name": "raschetka",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CRM для арендодателя: коммунальные платежи арендаторов",
+  "type": "module",
+  "engines": { "node": ">=22.6" },
+  "scripts": {
+    "test": "node --experimental-strip-types --no-warnings --test tests/*.test.ts"
+  }
+}

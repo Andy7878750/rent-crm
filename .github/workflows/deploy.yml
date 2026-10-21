@@ -1,7 +1,6 @@
 name: deploy
 
 # Сборка на GitHub и выкладка на сервер. Секреты: DEPLOY_HOST, DEPLOY_SSH_KEY.
-# Переменная (необязательно): APP_DOMAIN — иначе <ip-через-дефисы>.sslip.io
 on:
   push:
     branches: [main]
@@ -11,6 +10,10 @@ on:
         description: 'Сначала настроить сервер (первый запуск или изменения в deploy/setup.sh)'
         type: boolean
         default: false
+      domain:
+        description: 'Домен сайта (например, 24rentflow.ru); www и sslip.io добавятся сами'
+        type: string
+        default: '24rentflow.ru'
 
 concurrency: deploy
 
@@ -50,11 +53,12 @@ jobs:
         if: env.HAS_HOST == 'true' && inputs.setup
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
-          DOMAIN: ${{ vars.APP_DOMAIN }}
+          DOMAIN: ${{ inputs.domain }}
         run: |
-          D="${DOMAIN:-$(echo "$HOST" | tr . -).sslip.io}"
+          D="$DOMAIN www.$DOMAIN $(echo "$HOST" | tr . -).sslip.io"
+          D="$(echo $D)"
           $SCP deploy/setup.sh root@$HOST:/root/setup.sh
-          $SSH "bash /root/setup.sh $D"
+          $SSH "bash /root/setup.sh '$D'"
       - name: Выложить
         if: env.HAS_HOST == 'true'
         env:

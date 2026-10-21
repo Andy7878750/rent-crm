@@ -2,7 +2,8 @@
 # Первичная настройка сервера Ubuntu (запускается от root, можно запускать повторно).
 # Ставит: Node.js 22, PostgreSQL, nginx, certbot, swap 2 ГБ, пользователя app, службу rent-crm.
 set -euo pipefail
-DOMAIN="${1:?укажите домен}"
+# Домены через пробел: первый — основной. В сертификат попадут только те, что уже указывают на этот сервер.
+DOMAINS_IN="${1:?укажите домен}"
 EMAIL="${2:-}"
 export DEBIAN_FRONTEND=noninteractive
 
@@ -56,10 +57,18 @@ UNIT
 systemctl daemon-reload
 systemctl enable rent-crm >/dev/null
 
+MYIP="$(curl -fsS https://api.ipify.org || hostname -I | awk '{print $1}')"
+DOMAINS=""
+for d in $DOMAINS_IN; do
+  if getent ahostsv4 "$d" | awk '{print $1}' | grep -qx "$MYIP"; then DOMAINS="$DOMAINS $d"; else echo "skip $d: DNS ещё не указывает на $MYIP"; fi
+done
+DOMAINS="$(echo $DOMAINS)"
+[ -n "$DOMAINS" ] || { echo "ни один домен не указывает на сервер"; exit 1; }
+
 cat > /etc/nginx/sites-available/rent-crm <<NGINX
 server {
   listen 80;
-  server_name $DOMAIN;
+  server_name $DOMAINS;
   client_max_body_size 10m;
   location / {
     proxy_pass http://127.0.0.1:3000;
@@ -78,10 +87,9 @@ nginx -t && systemctl reload nginx
 
 ufw allow OpenSSH >/dev/null && ufw allow 'Nginx Full' >/dev/null && ufw --force enable >/dev/null
 
-# HTTPS-сертификат Let's Encrypt (продлевается сам).
-if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then
-  if [ -n "$EMAIL" ]; then certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
-  else certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --register-unsafely-without-email --redirect; fi
-fi
+# HTTPS-сертификат Let's Encrypt на все домены (продлевается сам).
+ARGS=""; for d in $DOMAINS; do ARGS="$ARGS -d $d"; done
+if [ -n "$EMAIL" ]; then MAIL="-m $EMAIL"; else MAIL="--register-unsafely-without-email"; fi
+certbot --nginx --cert-name rent-crm $ARGS --expand --non-interactive --agree-tos $MAIL --redirect
 
-echo "setup done: https://$DOMAIN"
+echo "setup done: $DOMAINS"

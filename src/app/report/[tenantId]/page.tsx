@@ -8,6 +8,7 @@ import { fmtMoney, rubWords } from '@/lib/calc/format';
 import type { BillLine, MeterUse } from '@/lib/calc/types';
 import { defaultMonth, isMonth, monthLabel } from '@/lib/month';
 import { PrintBar } from './print-bar';
+import { readRequisites, reportFooter } from '@/lib/requisites';
 
 export const metadata = { title: 'Отчёт для арендатора' };
 
@@ -45,9 +46,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<'/r
     .filter((m) => m.prev !== undefined && m.cur !== undefined)
     .map((m) => (m.label === l.label ? '' : m.label.slice(l.label.length + 3) + ' ') + `${q(m.prev!)} → ${q(m.cur!)}`).join(', ');
 
-  const req = (acc?.requisites ?? {}) as Record<string, string | boolean | undefined>;
-  const footer = [req.name || acc?.name, req.inn ? `ИНН ${req.inn}` : '', [req.phone, req.email].filter(Boolean).join(', '), req.noVat === false ? '' : 'без НДС']
-    .filter(Boolean).join(' · ');
+  const foot = reportFooter(readRequisites(acc?.requisites, acc?.name ?? ''));
 
   return (
     <div className="min-h-screen bg-[#e9edf3] print:bg-white">
@@ -88,7 +87,10 @@ export default async function ReportPage({ params, searchParams }: PageProps<'/r
           <span className="whitespace-nowrap text-[28px] font-semibold">{fmtMoney(total)} ₽</span>
           <span className="basis-full text-right text-[12px] text-faint">{rubWords(total)}</span>
         </div>
-        <footer className="mt-11 text-[11px] text-faint">{footer}</footer>
+        <footer className="mt-11 text-[11px] leading-relaxed text-faint">
+          {foot.pay && <div className="mb-1 text-ink-2">{foot.pay}</div>}
+          <div>{foot.line}</div>
+        </footer>
       </article>
     </div>
   );

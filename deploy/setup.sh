@@ -60,7 +60,8 @@ systemctl enable rent-crm >/dev/null
 MYIP="$(curl -fsS https://api.ipify.org || hostname -I | awk '{print $1}')"
 DOMAINS=""
 resolvectl flush-caches 2>/dev/null || true
-resolves() { { dig +short A "$1" @1.1.1.1; dig +short A "$1" @8.8.8.8; getent ahostsv4 "$1" | awk '{print $1}'; } 2>/dev/null | grep -qx "$MYIP"; }
+# Без «| grep -q» в конвейере: с pipefail ранний выход grep ломал проверку.
+resolves() { local ips; ips="$( { dig +short A "$1" @1.1.1.1; dig +short A "$1" @8.8.8.8; getent ahostsv4 "$1" | awk '{print $1}'; } 2>/dev/null || true)"; grep -qx "$MYIP" <<<"$ips"; }
 for d in $DOMAINS_IN; do
   if resolves "$d"; then DOMAINS="$DOMAINS $d"; else echo "skip $d: DNS ещё не указывает на $MYIP (1.1.1.1: $(dig +short A "$d" @1.1.1.1 | tr '\n' ' '); NS: $(dig +short NS "$d" @1.1.1.1 | tr '\n' ' '))"; fi
 done

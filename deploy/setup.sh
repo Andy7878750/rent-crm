@@ -60,7 +60,7 @@ systemctl enable rent-crm >/dev/null
 MYIP="$(curl -fsS https://api.ipify.org || hostname -I | awk '{print $1}')"
 DOMAINS=""
 for d in $DOMAINS_IN; do
-  if getent ahostsv4 "$d" | awk '{print $1}' | grep -qx "$MYIP"; then DOMAINS="$DOMAINS $d"; else echo "skip $d: DNS ещё не указывает на $MYIP"; fi
+  if getent ahostsv4 "$d" | awk '{print $1}' | grep -qx "$MYIP"; then DOMAINS="$DOMAINS $d"; else echo "skip $d: DNS ещё не указывает на $MYIP (сейчас: $(getent ahostsv4 "$d" | awk '{print $1}' | sort -u | tr '\n' ' '))"; fi
 done
 DOMAINS="$(echo $DOMAINS)"
 [ -n "$DOMAINS" ] || { echo "ни один домен не указывает на сервер"; exit 1; }
@@ -90,7 +90,11 @@ ufw allow OpenSSH >/dev/null && ufw allow 'Nginx Full' >/dev/null && ufw --force
 # HTTPS-сертификат Let's Encrypt на все домены (продлевается сам).
 ARGS=""; for d in $DOMAINS; do ARGS="$ARGS -d $d"; done
 if [ -n "$EMAIL" ]; then MAIL="-m $EMAIL"; else MAIL="--register-unsafely-without-email"; fi
-certbot --nginx --cert-name rent-crm $ARGS --expand --non-interactive --agree-tos $MAIL --redirect
+if ! certbot --nginx --cert-name rent-crm $ARGS --expand --non-interactive --agree-tos $MAIL --redirect; then
+  # У sslip.io общий лимит сертификатов Let's Encrypt — пробуем без него.
+  ARGS=""; for d in $DOMAINS; do case "$d" in *.sslip.io) ;; *) ARGS="$ARGS -d $d";; esac; done
+  [ -n "$ARGS" ] && certbot --nginx --cert-name rent-crm $ARGS --expand --non-interactive --agree-tos $MAIL --redirect
+fi
 
 echo "setup done: $DOMAINS"
 # Основной домен ещё не настроен в DNS — помечаем запуск как неуспешный, чтобы было видно, что нужен повтор.

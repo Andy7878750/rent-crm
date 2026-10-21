@@ -58,7 +58,12 @@ jobs:
           D="$DOMAIN www.$DOMAIN $(echo "$HOST" | tr . -).sslip.io"
           D="$(echo $D)"
           $SCP deploy/setup.sh root@$HOST:/root/setup.sh
-          $SSH "bash /root/setup.sh '$D'"
+          set +e
+          $SSH "bash /root/setup.sh '$D'" 2>&1 | tee setup.log
+          code=${PIPESTATUS[0]}
+          # Ключевые строки — в аннотации, чтобы их было видно в сводке запуска.
+          grep -E "skip |setup done|основной домен|ни один|Certificate|certbot|rate|Error|error|failed" setup.log | tail -15 | sed 's/^/::warning::/'
+          exit $code
       - name: Выложить
         if: env.HAS_HOST == 'true'
         env:

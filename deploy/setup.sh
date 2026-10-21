@@ -14,7 +14,7 @@ if ! swapon --show | grep -q /swapfile; then
 fi
 
 apt-get update -y
-apt-get install -y ca-certificates curl gnupg nginx postgresql certbot python3-certbot-nginx ufw unattended-upgrades
+apt-get install -y dnsutils ca-certificates curl gnupg nginx postgresql certbot python3-certbot-nginx ufw unattended-upgrades
 
 if ! command -v node >/dev/null || ! node -v | grep -q '^v22'; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
@@ -59,8 +59,10 @@ systemctl enable rent-crm >/dev/null
 
 MYIP="$(curl -fsS https://api.ipify.org || hostname -I | awk '{print $1}')"
 DOMAINS=""
+resolvectl flush-caches 2>/dev/null || true
+resolves() { { dig +short A "$1" @1.1.1.1; dig +short A "$1" @8.8.8.8; getent ahostsv4 "$1" | awk '{print $1}'; } 2>/dev/null | grep -qx "$MYIP"; }
 for d in $DOMAINS_IN; do
-  if getent ahostsv4 "$d" | awk '{print $1}' | grep -qx "$MYIP"; then DOMAINS="$DOMAINS $d"; else echo "skip $d: DNS ещё не указывает на $MYIP (сейчас: $(getent ahostsv4 "$d" | awk '{print $1}' | sort -u | tr '\n' ' '))"; fi
+  if resolves "$d"; then DOMAINS="$DOMAINS $d"; else echo "skip $d: DNS ещё не указывает на $MYIP (1.1.1.1: $(dig +short A "$d" @1.1.1.1 | tr '\n' ' '); NS: $(dig +short NS "$d" @1.1.1.1 | tr '\n' ' '))"; fi
 done
 DOMAINS="$(echo $DOMAINS)"
 [ -n "$DOMAINS" ] || { echo "ни один домен не указывает на сервер"; exit 1; }

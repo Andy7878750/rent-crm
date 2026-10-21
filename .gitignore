@@ -1,6 +1,18 @@
+# зависимости и сборка
 node_modules/
 .next/
+/out/
+/build
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# секреты: настоящий .env не коммитим, пример — да
 .env*
 !.env.example
+
+# прочее
 *.log
+*.pem
 .DS_Store
+.vercel

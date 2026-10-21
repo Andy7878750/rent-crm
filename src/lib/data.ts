@@ -1,0 +1,87 @@
+import 'server-only';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
+import { db, schema } from '@/db';
+import { shiftMonth } from '@/lib/month';
+import type { MonthInput, Reading, Service as CalcService, Tariff as CalcTariff } from '@/lib/calc/types';
+
+const num = (v: string | null | undefined) => (v === null || v === undefined ? undefined : Number(v));
+
+export type ObjectRow = typeof schema.objects.$inferSelect & { tenants: (typeof schema.tenants.$inferSelect)[] };
+
+/** Объекты аккаунта с арендаторами (без архивных). */
+export async function listObjects(accountId: string): Promise<ObjectRow[]> {
+  const objs = await db.select().from(schema.objects)
+    .where(and(eq(schema.objects.accountId, accountId), isNull(schema.objects.archivedAt)))
+    .orderBy(asc(schema.objects.sort), asc(schema.objects.createdAt));
+  if (!objs.length) return [];
+  const tens = await db.select().from(schema.tenants)
+    .where(and(inArray(schema.tenants.objectId, objs.map((o) => o.id)), isNull(schema.tenants.archivedAt)))
+    .orderBy(asc(schema.tenants.sort), asc(schema.tenants.createdAt));
+  return objs.map((o) => ({ ...o, tenants: tens.filter((t) => t.objectId === o.id) }));
+}
+
+export async function getObject(accountId: string, id: string): Promise<ObjectRow | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const all = await listObjects(accountId);
+  return all.find((o) => o.id === id) ?? null;
+}
+
+/** Услуги аккаунта с тарифами — в формате модуля расчёта. */
+export async function loadServices(accountId: string): Promise<CalcService[]> {
+  const svcs = await db.select().from(schema.services).where(eq(schema.services.accountId, accountId))
+    .orderBy(asc(schema.services.sort), asc(schema.services.createdAt));
+  if (!svcs.length) return [];
+  const trs = await db.select().from(schema.tariffs).where(inArray(schema.tariffs.serviceId, svcs.map((s) => s.id)));
+  const links = trs.length ? await db.select().from(schema.tariffTenants).where(inArray(schema.tariffTenants.tariffId, trs.map((t) => t.id))) : [];
+  return svcs.map((s) => ({
+    id: s.id, supplier: s.supplier, name: s.name, unit: s.unit, kind: s.kind,
+    tariffs: trs.filter((t) => t.serviceId === s.id).map((t): CalcTariff => ({
+      logic: t.logic, price: num(t.price), price2: num(t.price2), norm: num(t.norm), normPrice: num(t.normPrice),
+      extraName: t.extraName || undefined, sources: t.sources,
+      who: t.whoAll ? 'all' : links.filter((l) => l.tariffId === t.id).map((l) => l.tenantId),
+      from: t.validFrom,
+    })),
+  }));
+}
+
+/** Все данные месяца для расчёта: объекты, услуги, суммы счетов, показания. */
+export async function loadMonthInput(accountId: string, month: string): Promise<{ input: MonthInput; objects: ObjectRow[] }> {
+  const objects = await listObjects(accountId);
+  const services = await loadServices(accountId);
+  const objIds = objects.map((o) => o.id);
+  const tenIds = objects.flatMap((o) => o.tenants.map((t) => t.id));
+  const bills = objIds.length ? await db.select().from(schema.objectBills)
+    .where(and(inArray(schema.objectBills.objectId, objIds), eq(schema.objectBills.month, month))) : [];
+  const reads = tenIds.length ? await db.select().from(schema.readings)
+    .where(and(inArray(schema.readings.tenantId, tenIds), eq(schema.readings.month, month))) : [];
+
+  const billMap: MonthInput['bills'] = {};
+  for (const b of bills) (billMap[b.objectId] ??= {})[b.serviceId] = Number(b.amount);
+  // Прошлый месяц: если «было» не внесено, берём «стало» прошлого месяца.
+  const prevReads = tenIds.length ? await db.select().from(schema.readings)
+    .where(and(inArray(schema.readings.tenantId, tenIds), eq(schema.readings.month, shiftMonth(month, -1)))) : [];
+  const prevCur = new Map(prevReads.map((r) => [`${r.tenantId}|${r.serviceId}|${r.zone}`, num(r.cur)]));
+  const readMap: MonthInput['readings'] = {};
+  for (const r of prevReads) {
+    const key = r.zone ? `${r.serviceId}:${r.zone}` : r.serviceId;
+    if (r.cur !== null) (readMap[r.tenantId] ??= {})[key] = { prev: num(r.cur) };
+  }
+  for (const r of reads) {
+    const key = r.zone ? `${r.serviceId}:${r.zone}` : r.serviceId;
+    const v: Reading = { prev: num(r.prev) ?? prevCur.get(`${r.tenantId}|${r.serviceId}|${r.zone}`), cur: num(r.cur), usage: num(r.usage) };
+    (readMap[r.tenantId] ??= {})[key] = v;
+  }
+  return {
+    objects,
+    input: {
+      month,
+      services,
+      bills: billMap,
+      readings: readMap,
+      objects: objects.map((o) => ({
+        id: o.id, name: o.short, owner: o.isOwner,
+        tenants: o.tenants.map((t) => ({ id: t.id, name: t.name, share: Number(t.share) })),
+      })),
+    },
+  };
+}

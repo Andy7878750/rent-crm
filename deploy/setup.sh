@@ -93,3 +93,6 @@ if [ -n "$EMAIL" ]; then MAIL="-m $EMAIL"; else MAIL="--register-unsafely-withou
 certbot --nginx --cert-name rent-crm $ARGS --expand --non-interactive --agree-tos $MAIL --redirect
 
 echo "setup done: $DOMAINS"
+# Основной домен ещё не настроен в DNS — помечаем запуск как неуспешный, чтобы было видно, что нужен повтор.
+PRIMARY="${DOMAINS_IN%% *}"
+case " $DOMAINS " in *" $PRIMARY "*) ;; *) echo "основной домен $PRIMARY ещё не указывает на сервер — запустите настройку позже"; exit 3;; esac

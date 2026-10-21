@@ -1,0 +1,64 @@
+name: deploy
+
+# Сборка на GitHub и выкладка на сервер. Секреты: DEPLOY_HOST, DEPLOY_SSH_KEY.
+# Переменная (необязательно): APP_DOMAIN — иначе <ip-через-дефисы>.sslip.io
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      setup:
+        description: 'Сначала настроить сервер (первый запуск или изменения в deploy/setup.sh)'
+        type: boolean
+        default: false
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_HOST: ${{ secrets.DEPLOY_HOST != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc --noEmit -p . || (npx next typegen && npx tsc --noEmit -p .)
+      - run: npm run build
+      - name: Собрать архив
+        run: |
+          cp -r public .next/standalone/ 2>/dev/null || true
+          cp -r .next/static .next/standalone/.next/
+          cp -r drizzle scripts .next/standalone/
+          tar -czf release.tgz -C .next/standalone .
+      - name: SSH
+        if: env.HAS_HOST == 'true'
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id && chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+          echo "SSH=ssh -i $HOME/.ssh/id root@$HOST" >> $GITHUB_ENV
+          echo "SCP=scp -i $HOME/.ssh/id" >> $GITHUB_ENV
+      - name: Настроить сервер
+        if: env.HAS_HOST == 'true' && inputs.setup
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          DOMAIN: ${{ vars.APP_DOMAIN }}
+        run: |
+          D="${DOMAIN:-$(echo "$HOST" | tr . -).sslip.io}"
+          $SCP deploy/setup.sh root@$HOST:/root/setup.sh
+          $SSH "bash /root/setup.sh $D"
+      - name: Выложить
+        if: env.HAS_HOST == 'true'
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          $SCP release.tgz deploy/release.sh root@$HOST:/root/
+          $SSH "bash /root/release.sh /root/release.tgz"

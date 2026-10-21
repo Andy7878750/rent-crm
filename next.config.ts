@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   // Приложение целиком за логином и динамическое: классическая модель рендера.
   cacheComponents: false,
+  // Для сервера: сборка на GitHub, на сервер едет только готовая папка .next/standalone.
+  output: 'standalone',
   turbopack: {
     rules: {
       "*.css": {

@@ -15,14 +15,14 @@ export function Field({ label, name, error, right, ...props }: React.InputHTMLAt
   );
 }
 
-export function PasswordField({ label, error, autoComplete, onValue, right }: { label: string; error?: string; autoComplete: string; onValue?: (v: string) => void; right?: React.ReactNode }) {
+export function PasswordField({ label, error, autoComplete, onValue, value, right }: { label: string; error?: string; autoComplete: string; onValue?: (v: string) => void; value?: string; right?: React.ReactNode }) {
   const [peek, setPeek] = useState(false);
   return (
     <label className="label">
       <span className="flex justify-between">{label}{right}</span>
       <span className={`field ${error ? 'field-err' : ''}`}>
         <input name="password" type={peek ? 'text' : 'password'} autoComplete={autoComplete} placeholder="••••••••" aria-invalid={!!error}
-          onChange={(e) => onValue?.(e.target.value)} />
+          value={value} onChange={(e) => onValue?.(e.target.value)} />
         <button type="button" onClick={() => setPeek(!peek)} aria-label={peek ? 'Скрыть пароль' : 'Показать пароль'}
           className="flex size-[30px] items-center justify-center rounded-md text-faint hover:bg-[#f2f5fa]">
           {peek ? <EyeOff size={18} /> : <Eye size={18} />}

@@ -27,4 +27,5 @@ systemctl is-active --quiet rent-crm || { journalctl -u rent-crm -n 50 --no-page
 # Оставляем 5 последних версий.
 ls -1dt /opt/rent-crm/releases/* | tail -n +6 | xargs -r rm -rf
 rm -f "$ARCHIVE"
+[ -n "${SMTP_PASS:-}" ] && (cd "$REL" && sudo -u app --preserve-env=SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASS node scripts/mail-check.mjs) || true
 echo "released $REL"

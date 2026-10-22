@@ -70,7 +70,7 @@ jobs:
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          SMTP_USER: ${{ vars.SMTP_USER || 'rentflow.noreply@yandex.ru' }}
+          SMTP_USER: ${{ vars.SMTP_USER || 'rentflow@yandex.com' }}
           SMTP_HOST: ${{ vars.SMTP_HOST || 'smtp.yandex.ru' }}
           APP_URL: https://${{ inputs.domain || '24rentflow.ru' }}
         run: |

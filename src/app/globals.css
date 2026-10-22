@@ -28,6 +28,10 @@ html, body { background: var(--color-bg); color: var(--color-ink); }
 body { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
 ::placeholder { color: #9aa4b5; opacity: 1; }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* Поле ввода подсвечивается целиком (рамка .field), без второй прямоугольной рамки у самого input. */
+.field > input:focus-visible, .field > select:focus-visible { outline: none; }
+/* Автозаполнение Chrome не красит поле в голубой. */
+.field > input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #fff inset; -webkit-text-fill-color: var(--color-ink); }
 
 @layer components {
   .card { @apply rounded-xl border border-line bg-card; }

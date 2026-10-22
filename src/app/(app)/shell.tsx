@@ -43,13 +43,21 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
   const [open, setOpen] = useState<string[]>(['obj', 'bills', 'refs', 'rep']);
   const [mini, setMini] = useState(false);
   const [mobile, setMobile] = useState(false);
-  useEffect(() => { const s = load(); if (s.open) setOpen(s.open); if (s.mini) setMini(true); }, []);
-  useEffect(() => { setMobile(false); }, [path]);
+  const [fly, setFly] = useState<string | null>(null);
+  // При переходе на другую страницу закрываем выезжающее меню и подменю.
+  const [seenPath, setSeenPath] = useState(path);
+  if (seenPath !== path) { setSeenPath(path); setMobile(false); setFly(null); }
+  // Запомненные свёрнутые группы и режим меню (только в этом браузере).
+  useEffect(() => {
+    const s = load();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage доступен только в браузере
+    if (s.open) setOpen(s.open);
+    if (s.mini) setMini(true);
+  }, []);
   const toggle = (id: string) => { const next = open.includes(id) ? open.filter((x) => x !== id) : [...open, id]; setOpen(next); save({ open: next, mini }); };
   const setMiniSaved = (v: boolean) => { setMini(v); save({ open, mini: v }); };
 
   const initials = user.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const compact = mini && !mobile;
 
   const nav = (
     <nav aria-label="Разделы" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3">
@@ -57,14 +65,6 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
         const Icon = g.icon;
         const on = activeGroup === g.id;
         const expanded = open.includes(g.id) || on;
-        if (compact) {
-          return (
-            <Link key={g.id} href={g.items[0].href} title={g.label} aria-label={g.label} aria-current={on ? 'page' : undefined}
-              className={`flex h-10 items-center justify-center rounded-lg ${on ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-[#f1f4f8]'}`}>
-              <Icon size={20} strokeWidth={1.8} />
-            </Link>
-          );
-        }
         return (
           <div key={g.id} className="flex flex-col">
             <button type="button" onClick={() => toggle(g.id)} aria-expanded={expanded}
@@ -99,36 +99,85 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
   );
 
   const settingsOn = path.startsWith('/settings');
-  const bottom = (
-    <div className="flex flex-col gap-1 border-t border-line px-3 py-3">
-      <Link href="/settings" title="Настройки" aria-label={compact ? 'Настройки' : undefined}
-        className={`flex h-10 items-center gap-3 rounded-lg px-3 text-[14px] font-semibold ${compact ? 'justify-center' : ''} ${settingsOn ? 'bg-accent-soft text-accent' : 'text-ink hover:bg-[#f1f4f8]'}`}>
-        <Settings size={19} strokeWidth={1.8} className={settingsOn ? 'text-accent' : 'text-muted'} />{!compact && 'Настройки'}
+  const mobileBottom = (
+    <div className="border-t border-line px-3 py-3">
+      <Link href="/settings" className={`flex h-10 items-center gap-3 rounded-lg px-3 text-[14px] font-semibold ${settingsOn ? 'bg-accent-soft text-accent' : 'text-ink hover:bg-[#f1f4f8]'}`}>
+        <Settings size={19} strokeWidth={1.8} className={settingsOn ? 'text-accent' : 'text-muted'} />Настройки
       </Link>
-      {!mobile && (
-        <button type="button" onClick={() => setMiniSaved(!mini)} title={mini ? 'Развернуть меню' : 'Свернуть меню'} aria-label={mini ? 'Развернуть меню' : 'Свернуть меню'}
-          className={`flex h-9 items-center gap-3 rounded-lg px-3 text-[13px] text-muted hover:bg-[#f1f4f8] ${compact ? 'justify-center' : ''}`}>
-          {mini ? <ChevronsRight size={18} /> : <><ChevronsLeft size={18} /> Свернуть меню</>}
+    </div>
+  );
+
+  // Тёмная полоса: логотип, в свёрнутом виде — значки разделов (подменю выпадает рядом), внизу — настройки.
+  const stripBtn = (on: boolean) =>
+    `flex size-10 items-center justify-center rounded-[10px] ${on ? 'bg-nav-on text-white' : 'text-[#9aa8c2] hover:bg-nav-on/60 hover:text-white'}`;
+  const strip = (
+    <nav aria-label="Панель" className="sticky top-0 z-40 hidden h-screen w-[60px] flex-none flex-col items-center gap-1.5 bg-nav py-3 lg:flex"
+      onMouseLeave={() => setFly(null)}>
+      <Link href="/objects" aria-label="Расчётка — на главную" className="mb-3 flex size-[34px] items-center justify-center rounded-[9px] bg-accent text-[16px] font-bold text-white">Р</Link>
+      {mini && groups.map((g) => {
+        const Icon = g.icon;
+        const on = activeGroup === g.id;
+        return (
+          <div key={g.id} className="relative" onMouseEnter={() => setFly(g.id)}>
+            <button type="button" onClick={() => setFly(fly === g.id ? null : g.id)} aria-label={g.label} aria-expanded={fly === g.id}
+              className={stripBtn(on || fly === g.id)}><Icon size={20} strokeWidth={1.8} /></button>
+            {fly === g.id && (
+              <div className="absolute left-full top-0 pl-2">
+                <div role="menu" className="w-[236px] rounded-xl border border-line bg-white p-2 shadow-card">
+                  <div className="px-3 pb-1.5 pt-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">{g.label}</div>
+                  {g.items.map((i) => {
+                    const a = isOn(i);
+                    return (
+                      <Link key={i.href} href={i.href} role="menuitem" aria-current={a ? 'page' : undefined}
+                        className={`flex h-9 items-center justify-between gap-2 rounded-lg px-3 text-[14px] ${a ? 'bg-accent-soft font-semibold text-accent' : 'text-ink-2 hover:bg-[#f1f4f8] hover:text-ink'}`}>
+                        <span className="truncate">{i.label}</span>
+                        {i.count != null && <span className={`text-[12px] ${a ? 'text-accent' : 'text-faint'}`}>{i.count}</span>}
+                      </Link>
+                    );
+                  })}
+                  {g.id === 'obj' && (
+                    <Link href="/objects/new" role="menuitem" className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-[14px] font-semibold text-accent hover:bg-accent-soft"><Plus size={16} /> Добавить объект</Link>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <div className="flex-1" />
+      {mini && (
+        <button type="button" onClick={() => setMiniSaved(false)} aria-label="Развернуть меню" title="Развернуть меню" className={stripBtn(false)}>
+          <ChevronsRight size={20} />
         </button>
       )}
-    </div>
+      <Link href="/settings" aria-label="Настройки" title="Настройки" aria-current={settingsOn ? 'page' : undefined} className={stripBtn(settingsOn)}>
+        <Settings size={20} strokeWidth={1.8} />
+      </Link>
+    </nav>
   );
 
   const logo = (
     <Link href="/objects" className="flex items-center gap-2.5" aria-label="Расчётка — на главную">
       <span aria-hidden className="flex size-[30px] flex-none items-center justify-center rounded-[8px] bg-accent text-[15px] font-bold text-white">Р</span>
-      {!compact && <span className="text-[17px] font-bold">Расчётка</span>}
+      <span className="text-[17px] font-bold">Расчётка</span>
     </Link>
   );
 
   return (
     <div className="flex min-h-screen">
-      {/* Боковое меню: светлое, с группами. На узком экране — выезжает по кнопке. */}
-      <aside aria-label="Меню" className={`sticky top-0 hidden h-screen flex-none flex-col border-r border-line bg-white lg:flex ${compact ? 'w-[68px]' : 'w-[248px]'}`}>
-        <div className={`flex h-[60px] flex-none items-center border-b border-line ${compact ? 'justify-center' : 'px-5'}`}>{logo}</div>
-        {nav}
-        {bottom}
-      </aside>
+      {strip}
+      {/* Светлое меню с разделами. Свёрнутое — остаются только значки в тёмной полосе. */}
+      {!mini && (
+        <aside aria-label="Меню" className="sticky top-0 hidden h-screen w-[248px] flex-none flex-col border-r border-line bg-white lg:flex">
+          <div className="flex h-[60px] flex-none items-center border-b border-line px-5 text-[17px] font-bold">Расчётка</div>
+          {nav}
+          <div className="border-t border-line px-3 py-3">
+            <button type="button" onClick={() => setMiniSaved(true)} className="flex h-9 w-full items-center gap-3 rounded-lg px-3 text-[13px] text-muted hover:bg-[#f1f4f8]">
+              <ChevronsLeft size={18} /> Свернуть меню
+            </button>
+          </div>
+        </aside>
+      )}
       {mobile && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-[#1b2433]/30" onClick={() => setMobile(false)} />
@@ -137,7 +186,7 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
               <button onClick={() => setMobile(false)} aria-label="Закрыть меню" className="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-[#f1f4f8]"><X size={20} /></button>
             </div>
             {nav}
-            {bottom}
+            {mobileBottom}
           </aside>
         </div>
       )}

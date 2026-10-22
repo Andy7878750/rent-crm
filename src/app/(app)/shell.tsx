@@ -111,7 +111,7 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
   const stripBtn = (on: boolean) =>
     `flex size-10 items-center justify-center rounded-[10px] ${on ? 'bg-nav-on text-white' : 'text-[#9aa8c2] hover:bg-nav-on/60 hover:text-white'}`;
   const strip = (
-    <nav aria-label="Панель" className="sticky top-0 z-40 hidden h-screen w-[60px] flex-none flex-col items-center gap-1.5 bg-nav py-3 lg:flex"
+    <nav aria-label="Панель" className="sticky top-0 z-40 hidden h-screen w-[60px] flex-none flex-col items-center gap-1.5 bg-nav pt-3 lg:flex"
       onMouseLeave={() => setFly(null)}>
       <Link href="/objects" aria-label="Расчётка — на главную" className="mb-3 flex size-[34px] items-center justify-center rounded-[9px] bg-accent text-[16px] font-bold text-white">Р</Link>
       {mini && groups.map((g) => {
@@ -145,14 +145,17 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
         );
       })}
       <div className="flex-1" />
-      {mini && (
-        <button type="button" onClick={() => setMiniSaved(false)} aria-label="Развернуть меню" title="Развернуть меню" className={stripBtn(false)}>
-          <ChevronsRight size={20} />
-        </button>
-      )}
       <Link href="/settings" aria-label="Настройки" title="Настройки" aria-current={settingsOn ? 'page' : undefined} className={stripBtn(settingsOn)}>
         <Settings size={20} strokeWidth={1.8} />
       </Link>
+      {/* Нижняя строка — на одном уровне с «Свернуть меню»; шестерёнка над ней не двигается. */}
+      <div className="mt-1.5 flex h-[61px] w-full flex-none items-center justify-center border-t border-white/10">
+        {mini && (
+          <button type="button" onClick={() => setMiniSaved(false)} aria-label="Развернуть меню" title="Развернуть меню" className={stripBtn(false)}>
+            <ChevronsRight size={20} />
+          </button>
+        )}
+      </div>
     </nav>
   );
 
@@ -171,7 +174,7 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
         <aside aria-label="Меню" className="sticky top-0 hidden h-screen w-[248px] flex-none flex-col border-r border-line bg-white lg:flex">
           <div className="flex h-[60px] flex-none items-center border-b border-line px-5 text-[17px] font-bold">Расчётка</div>
           {nav}
-          <div className="border-t border-line px-3 py-3">
+          <div className="flex h-[61px] flex-none items-center border-t border-line px-3">
             <button type="button" onClick={() => setMiniSaved(true)} className="flex h-9 w-full items-center gap-3 rounded-lg px-3 text-[13px] text-muted hover:bg-[#f1f4f8]">
               <ChevronsLeft size={18} /> Свернуть меню
             </button>

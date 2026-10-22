@@ -160,3 +160,12 @@ export const invoices = pgTable('invoices', {
   paidOn: date('paid_on'),
   createdAt: createdAt(),
 }, (t) => [uniqueIndex('invoices_tenant_month_uq').on(t.tenantId, t.month)]);
+
+/** Одноразовые ссылки из писем: сброс пароля и подтверждение почты. В базе — только хеш токена. */
+export const emailTokens = pgTable('email_tokens', {
+  tokenHash: text('token_hash').primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  kind: text('kind', { enum: ['reset', 'verify'] }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: createdAt(),
+});

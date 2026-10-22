@@ -1,6 +1,7 @@
 name: deploy
 
-# Сборка на GitHub и выкладка на сервер. Секреты: DEPLOY_HOST, DEPLOY_SSH_KEY.
+# Сборка на GitHub и выкладка на сервер. Секреты: DEPLOY_HOST, DEPLOY_SSH_KEY, SMTP_PASS (пароль почты для писем).
+# Почта: SMTP_USER/SMTP_HOST ниже (по умолчанию Яндекс).
 on:
   push:
     branches: [main]
@@ -68,6 +69,23 @@ jobs:
         if: env.HAS_HOST == 'true'
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_USER: ${{ vars.SMTP_USER || 'rentflow.noreply@yandex.ru' }}
+          SMTP_HOST: ${{ vars.SMTP_HOST || 'smtp.yandex.ru' }}
+          APP_URL: https://${{ inputs.domain || '24rentflow.ru' }}
         run: |
+          # Настройки почты — в отдельный файл; release.sh перенесёт их в /etc/rent-crm.env.
+          umask 077
+          {
+            echo "APP_URL=$APP_URL"
+            if [ -n "$SMTP_PASS" ]; then
+              printf 'SMTP_HOST=%s\nSMTP_PORT=465\nSMTP_USER=%s\nSMTP_PASS="%s"\nMAIL_FROM="Расчётка <%s>"\n' "$SMTP_HOST" "$SMTP_USER" "$SMTP_PASS" "$SMTP_USER"
+            fi
+          } > mail.env
+          $SCP mail.env root@$HOST:/root/mail.env
+          rm -f mail.env
           $SCP release.tgz deploy/release.sh root@$HOST:/root/
-          $SSH "bash /root/release.sh /root/release.tgz"
+          $SSH "bash /root/release.sh /root/release.tgz" 2>&1 | tee release.log
+          code=${PIPESTATUS[0]}
+          grep -E "^mail:" release.log | sed 's/^/::warning::/' || true
+          exit $code

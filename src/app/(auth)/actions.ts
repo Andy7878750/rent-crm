@@ -6,6 +6,8 @@ import { db, schema } from '@/db';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { createSession, destroySession } from '@/lib/auth/session';
 import { createExample } from '@/lib/example';
+import { consumeToken, sendResetLetter, sendVerifyLetter } from '@/lib/auth/tokens';
+import { getUser } from '@/lib/auth/session';
 import { defaultMonth } from '@/lib/month';
 
 export type FormState = {
@@ -53,6 +55,8 @@ export async function register(_prev: FormState, fd: FormData): Promise<FormStat
     await createExample(tx, acc.id, defaultMonth());
     return u.id;
   });
+  // Письмо — после создания аккаунта; если почта не ушла, регистрация всё равно состоялась.
+  await sendVerifyLetter({ id: userId, email, name });
   await createSession(userId, true);
   redirect('/objects');
 }
@@ -60,4 +64,40 @@ export async function register(_prev: FormState, fd: FormData): Promise<FormStat
 export async function logout() {
   await destroySession();
   redirect('/login');
+}
+
+export type ForgotState = { sent?: string; error?: string; email?: string };
+
+/** «Забыли пароль?» — всегда один и тот же ответ, чтобы по форме нельзя было узнать, есть ли такая почта. */
+export async function requestReset(_prev: ForgotState, fd: FormData): Promise<ForgotState> {
+  const email = str(fd, 'email').toLowerCase();
+  if (!EMAIL_RE.test(email)) return { error: email ? 'Проверьте адрес почты' : 'Введите почту', email };
+  const [user] = await db.select({ id: schema.users.id, email: schema.users.email }).from(schema.users).where(eq(schema.users.email, email)).limit(1);
+  if (user && (await sendResetLetter(user)) === 'failed') return { error: 'Не удалось отправить письмо. Попробуйте через несколько минут.', email };
+  return { sent: email };
+}
+
+export type ResetState = { error?: string };
+
+/** Новый пароль по ссылке из письма. Все прежние входы завершаются. */
+export async function resetPassword(_prev: ResetState, fd: FormData): Promise<ResetState> {
+  const password = String(fd.get('password') ?? '');
+  if (password.length < 8) return { error: 'Пароль должен быть не короче 8 символов' };
+  const userId = await consumeToken(String(fd.get('t') ?? ''), 'reset');
+  if (!userId) return { error: 'Ссылка устарела или уже использована. Запросите новую.' };
+  const passwordHash = await hashPassword(password);
+  const [u] = await db.select({ v: schema.users.emailVerifiedAt }).from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  // Раз человек открыл письмо — почта его, заодно считаем её подтверждённой.
+  await db.update(schema.users).set({ passwordHash, emailVerifiedAt: u?.v ?? new Date() }).where(eq(schema.users.id, userId));
+  await db.delete(schema.sessions).where(eq(schema.sessions.userId, userId));
+  await createSession(userId, true);
+  redirect('/objects');
+}
+
+/** Отправить письмо подтверждения ещё раз (из плашки в приложении). */
+export async function resendVerify(): Promise<'sent' | 'soon' | 'failed' | 'done'> {
+  const user = await getUser();
+  if (!user) redirect('/login');
+  if (user.emailVerified) return 'done';
+  return sendVerifyLetter(user);
 }

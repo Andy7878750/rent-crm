@@ -33,7 +33,7 @@ export async function destroySession() {
   store.delete(SESSION_COOKIE);
 }
 
-export type CurrentUser = { id: string; name: string; email: string; role: 'owner' | 'staff'; accountId: string; accountName: string };
+export type CurrentUser = { id: string; name: string; email: string; role: 'owner' | 'staff'; accountId: string; accountName: string; emailVerified: boolean };
 
 /** Текущий пользователь или null. Кешируется в пределах одного запроса. */
 export const getUser = cache(async (): Promise<CurrentUser | null> => {
@@ -42,14 +42,17 @@ export const getUser = cache(async (): Promise<CurrentUser | null> => {
   const rows = await db
     .select({
       id: schema.users.id, name: schema.users.name, email: schema.users.email, role: schema.users.role,
-      accountId: schema.users.accountId, accountName: schema.accounts.name,
+      accountId: schema.users.accountId, accountName: schema.accounts.name, verifiedAt: schema.users.emailVerifiedAt,
     })
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.users.id, schema.sessions.userId))
     .innerJoin(schema.accounts, eq(schema.accounts.id, schema.users.accountId))
     .where(and(eq(schema.sessions.tokenHash, hashToken(token)), gt(schema.sessions.expiresAt, new Date())))
     .limit(1);
-  return rows[0] ?? null;
+  const r = rows[0];
+  if (!r) return null;
+  const { verifiedAt, ...u } = r;
+  return { ...u, emailVerified: !!verifiedAt };
 });
 
 /** Для страниц и действий за логином: пользователь или переход на /login. */

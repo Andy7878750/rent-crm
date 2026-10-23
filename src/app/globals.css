@@ -17,6 +17,7 @@
   /* Терракота — только для главных действий (кнопка, логотип). */
   --color-cta: #c8663b;
   --color-cta-hover: #ad5530;
+  --color-cta-ink: #b85a31; /* текст терракотой: темнее, чтобы читался на белом */
   --color-cta-soft: #f8e9e1;
   --color-nav: #34495e;
   --color-nav-on: #4a6076;
@@ -31,6 +32,7 @@
 html, body { background: var(--color-bg); color: var(--color-ink); }
 body { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
 ::placeholder { color: #9aa4b5; opacity: 1; }
+input[type=checkbox], input[type=radio] { accent-color: var(--color-accent); }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 /* Поле ввода подсвечивается целиком (рамка .field), без второй прямоугольной рамки у самого input. */
 .field > input:focus-visible, .field > select:focus-visible { outline: none; }
@@ -44,7 +46,7 @@ body { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
   .field-err { @apply border-[#d4553a]; }
   .label { @apply flex flex-col gap-1.5 text-[13px] text-ink-2; }
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-4 py-2.5 text-[14px] font-semibold text-ink transition hover:bg-[#f6f8fb] disabled:cursor-default disabled:opacity-40; }
-  .btn-primary { @apply border-cta bg-cta text-white hover:border-cta-hover hover:bg-cta-hover; }
+  .btn-primary { @apply border-cta bg-white text-cta-ink hover:bg-cta-soft; }
   .pill { @apply inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-semibold; }
   .eyebrow { @apply text-[12px] font-semibold uppercase tracking-[0.06em] text-ink; }
   .hint { @apply text-[12px] text-muted; }

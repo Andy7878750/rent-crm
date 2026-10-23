@@ -43,7 +43,7 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
             <input type="hidden" name="typeLabel" value={typeValue.startsWith('c:') ? typeValue.slice(2) : ''} />
             <Select value={typeValue} onChange={setTypeValue}
               options={[
-                { value: 'nonres', label: 'Нежилое помещение' }, { value: 'flat', label: 'Квартира' },
+                { value: 'flat', label: 'Квартира' }, { value: 'nonres', label: 'Нежилое помещение' },
                 ...custom.map((c) => ({ value: `c:${c}`, label: c, removable: true })),
                 { value: 'other', label: 'Другое' },
               ]}

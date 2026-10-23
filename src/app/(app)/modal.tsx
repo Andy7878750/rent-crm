@@ -30,9 +30,9 @@ export function Modal({ children, wide = false }: { children: React.ReactNode; w
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#2c3e50]/40 px-3 py-6 sm:py-10" onMouseDown={(e) => { if (e.target === e.currentTarget) router.back(); }}>
       <div ref={panel} role="dialog" aria-modal="true"
-        className={`relative mx-auto flex w-full flex-col gap-4 rounded-2xl bg-bg p-5 shadow-xl sm:p-6 ${wide ? 'max-w-[920px]' : 'max-w-[820px]'}`}>
+        className={`relative mx-auto flex w-full flex-col gap-4 rounded-2xl bg-white p-5 shadow-xl sm:p-6 ${wide ? 'max-w-[920px]' : 'max-w-[820px]'}`}>
         <button type="button" onClick={() => router.back()} aria-label="Закрыть" title="Закрыть (Esc)"
-          className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-lg text-muted hover:bg-white hover:text-ink">
+          className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-lg text-muted hover:bg-[#f1f4f7] hover:text-ink">
           <X size={20} />
         </button>
         <InModal.Provider value={true}>{children}</InModal.Provider>

@@ -1,6 +1,7 @@
 'use client';
 
 import { CancelButton } from '../modal';
+import { Select } from '@/components/select';
 import { useActionState, useState } from 'react';
 import { X } from 'lucide-react';
 import { saveObject, type ObjectFormState } from './actions';
@@ -34,11 +35,10 @@ export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string
       <section className="card overflow-hidden">
         <div className="border-b border-line bg-[#f6f8fb] px-4 py-2.5 eyebrow">Объект и УК / ТСЖ</div>
         <div className="grid gap-3.5 p-4 sm:grid-cols-2">
-          <label className="label"><span>Тип <span className="text-[#b4362b]">*</span></span>
-            <span className="field"><select name="type" defaultValue={initial.type}>
-              <option value="nonres">Нежилое помещение</option><option value="flat">Квартира</option><option value="other">Другое</option>
-            </select></span>
-          </label>
+          <div className="label"><span>Тип <span className="text-[#b4362b]">*</span></span>
+            <Select name="type" defaultValue={initial.type}
+              options={[{ value: 'nonres', label: 'Нежилое помещение' }, { value: 'flat', label: 'Квартира' }, { value: 'other', label: 'Другое' }]} />
+          </div>
           {input('short', <>Короткое название <span className="text-[#b4362b]">*</span></>, initial.short, { placeholder: 'Например, Королёва 61' })}
           <div className="sm:col-span-2 grid gap-3.5 sm:grid-cols-[1fr_120px]">
             {input('address', 'Адрес', initial.address)}

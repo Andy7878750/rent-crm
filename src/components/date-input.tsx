@@ -2,6 +2,7 @@
 
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Floating } from './floating';
 
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -25,10 +26,11 @@ export function DateInput({ value, onChange, error, placeholder = 'дд.мм.г�
   const base = value ? new Date(`${value}T00:00:00`) : new Date();
   const [view, setView] = useState({ y: base.getFullYear(), m: base.getMonth() });
   const box = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const close = (e: MouseEvent) => { const t = e.target as Node; if (!box.current?.contains(t) && !panel.current?.contains(t)) setOpen(false); };
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
     document.addEventListener('mousedown', close);
     window.addEventListener('keydown', esc, true);
@@ -64,7 +66,8 @@ export function DateInput({ value, onChange, error, placeholder = 'дд.мм.г�
         </button>
       </span>
       {open && (
-        <div role="dialog" aria-label="Календарь" className="absolute left-0 top-[calc(100%+6px)] z-20 w-[288px] rounded-xl border border-line bg-white p-3 shadow-card">
+        <Floating anchor={box} width={288} panelRef={panel}>
+        <div role="dialog" aria-label="Календарь" className="rounded-xl border border-line bg-white p-3 shadow-card">
           <div className="mb-2 flex items-center justify-between">
             <button type="button" onClick={() => shift(-1)} aria-label="Предыдущий месяц" className="flex size-8 items-center justify-center rounded-lg text-ink-2 hover:bg-[#f1f4f7]"><ChevronLeft size={18} /></button>
             <b className="text-[14px] font-semibold">{MONTHS[view.m]} {view.y}</b>
@@ -89,6 +92,7 @@ export function DateInput({ value, onChange, error, placeholder = 'дд.мм.г�
             {value && <button type="button" onClick={() => { onChange(''); setText(''); setOpen(false); }} className="rounded-md px-2 py-1 text-muted hover:bg-[#f1f4f7]">Очистить</button>}
           </div>
         </div>
+        </Floating>
       )}
     </div>
   );

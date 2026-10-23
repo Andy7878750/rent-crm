@@ -2,6 +2,7 @@
 
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { Floating } from './floating';
 
 type Opt = { value: string; label: string };
 
@@ -11,12 +12,13 @@ export function Select({ name, options, defaultValue, onChange }: { name: string
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(0);
   const box = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const id = useId();
   const current = options.find((o) => o.value === value);
 
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const close = (e: MouseEvent) => { const t = e.target as Node; if (!box.current?.contains(t) && !panel.current?.contains(t)) setOpen(false); };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
@@ -46,7 +48,8 @@ export function Select({ name, options, defaultValue, onChange }: { name: string
         <ChevronDown size={18} className={`text-muted transition ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <ul id={id} role="listbox" className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 rounded-xl border border-line bg-white p-1.5 shadow-card">
+        <Floating anchor={box} panelRef={panel}>
+        <ul id={id} role="listbox" className="rounded-xl border border-line bg-white p-1.5 shadow-card">
           {options.map((o, i) => (
             <li key={o.value} role="option" aria-selected={o.value === value}
               onMouseEnter={() => setHi(i)} onMouseDown={(e) => { e.preventDefault(); pick(o.value); }}
@@ -55,6 +58,7 @@ export function Select({ name, options, defaultValue, onChange }: { name: string
             </li>
           ))}
         </ul>
+        </Floating>
       )}
     </div>
   );

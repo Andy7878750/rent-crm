@@ -8,7 +8,7 @@ import { X } from 'lucide-react';
 import { saveObject, type ObjectFormState } from './actions';
 
 export type ObjectFormValues = {
-  type: 'nonres' | 'flat' | 'other'; short: string; address: string; floor: string;
+  type: 'nonres' | 'flat' | 'other'; typeLabel: string; short: string; address: string; floor: string;
   ukName: string; ukPhone: string; cabinetUrl: string; cabinetLogin: string; cabinetHint: string; isOwner: boolean;
   tenants: Array<{ id?: string; name: string; share: string; phone: string; email: string; contract: string; contractEnd: string }>;
 };
@@ -18,6 +18,7 @@ const blank = () => ({ name: '', share: '', phone: '', email: '', contract: '', 
 export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string | null; initial: ObjectFormValues; cancelHref: string }) {
   const [state, action, pending] = useActionState<ObjectFormState, FormData>(saveObject.bind(null, objectId), {});
   const [owner, setOwner] = useState(initial.isOwner);
+  const [type, setType] = useState(initial.type);
   const [rows, setRows] = useState(initial.tenants.length ? initial.tenants : [blank()]);
   const e = state.errors ?? {};
   const sum = rows.reduce((a, r) => a + (Number(String(r.share).replace(',', '.')) || 0), 0);
@@ -37,8 +38,12 @@ export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string
         <div className="border-b border-line bg-[#f6f8fb] px-4 py-2.5 eyebrow">Объект и УК / ТСЖ</div>
         <div className="grid gap-3.5 p-4 sm:grid-cols-2">
           <div className="label"><span>Тип <span className="text-[#b4362b]">*</span></span>
-            <Select name="type" defaultValue={initial.type}
-              options={[{ value: 'nonres', label: 'Нежилое помещение' }, { value: 'flat', label: 'Квартира' }, { value: 'other', label: 'Другое' }]} />
+            <Select name="type" defaultValue={initial.type} onChange={(v) => setType(v as typeof type)}
+              options={[{ value: 'nonres', label: 'Нежилое помещение' }, { value: 'flat', label: 'Квартира' }, { value: 'other', label: 'Другое — свой вариант' }]} />
+            {type === 'other' && (
+              <span className="field"><input name="typeLabel" defaultValue={initial.typeLabel} maxLength={40} autoFocus
+                placeholder="Свой вариант: склад, гараж, офис…" aria-label="Свой вариант типа" /></span>
+            )}
           </div>
           {input('short', <>Короткое название <span className="text-[#b4362b]">*</span></>, initial.short, { placeholder: 'Например, Королёва 61' })}
           <div className="sm:col-span-2 grid gap-3.5 sm:grid-cols-[1fr_120px]">

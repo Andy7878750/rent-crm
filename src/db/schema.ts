@@ -45,6 +45,8 @@ export const objects = pgTable('objects', {
   id: id(),
   accountId: uuid('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
   type: text('type', { enum: ['nonres', 'flat', 'other'] }).notNull().default('nonres'),
+  /** Свой вариант типа, когда выбрано «Другое» (склад, гараж…). */
+  typeLabel: text('type_label').notNull().default(''),
   short: text('short').notNull(),
   address: text('address').notNull().default(''),
   floor: text('floor').notNull().default(''),

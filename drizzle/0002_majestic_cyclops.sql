@@ -1,0 +1,1 @@
+ALTER TABLE "objects" ADD COLUMN "type_label" text DEFAULT '' NOT NULL;

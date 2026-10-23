@@ -56,7 +56,7 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-center gap-2 text-[17px] font-semibold">{o.short}
                     {o.isExample && <span className="pill bg-accent-soft text-accent">Пример</span>}</span>
-                  <span className="block text-[12px] text-muted">{TYPE[o.type]}</span>
+                  <span className="block text-[12px] text-muted">{o.type === 'other' && o.typeLabel ? o.typeLabel : TYPE[o.type]}</span>
                 </span>
               </div>
               {o.address && <div className="px-[18px] text-[13px] text-muted">{o.address}</div>}

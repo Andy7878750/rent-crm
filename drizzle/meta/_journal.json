@@ -15,6 +15,13 @@
       "when": 1792649204810,
       "tag": "0001_noisy_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792743125770,
+      "tag": "0002_majestic_cyclops",
+      "breakpoints": true
     }
   ]
 }

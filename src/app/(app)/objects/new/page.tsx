@@ -7,7 +7,7 @@ export default function NewObjectPage() {
     <>
       <h1 className="text-[22px] font-bold">Новый объект</h1>
       <ObjectForm objectId={null} cancelHref="/objects" initial={{
-        type: 'nonres', short: '', address: '', floor: '', ukName: '', ukPhone: '', cabinetUrl: '', cabinetLogin: '', cabinetHint: '', isOwner: false, tenants: [],
+        type: 'nonres', typeLabel: '', short: '', address: '', floor: '', ukName: '', ukPhone: '', cabinetUrl: '', cabinetLogin: '', cabinetHint: '', isOwner: false, tenants: [],
       }} />
     </>
   );

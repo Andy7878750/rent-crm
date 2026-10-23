@@ -54,6 +54,7 @@ export async function saveObject(objectId: string | null, _prev: ObjectFormState
 
   const values = {
     type: (['nonres', 'flat', 'other'].includes(g('type')) ? g('type') : 'nonres') as 'nonres' | 'flat' | 'other',
+    typeLabel: g('type') === 'other' ? g('typeLabel').slice(0, 40) : '',
     short: g('short'), address: g('address'), floor: g('floor'), ukName: g('ukName'), ukPhone: g('ukPhone'),
     cabinetUrl: g('cabinetUrl'), cabinetLogin: g('cabinetLogin'), cabinetHint: g('cabinetHint'), isOwner,
   };

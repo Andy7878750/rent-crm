@@ -11,7 +11,7 @@ export default async function NewObjectPage() {
     <>
       <h1 className="text-[22px] font-bold">Новый объект</h1>
       <ObjectForm customTypes={customTypes} objectId={null} cancelHref="/objects" initial={{
-        type: 'nonres', typeLabel: '', short: '', address: '', floor: '', ukName: '', ukPhone: '', cabinetUrl: '', cabinetLogin: '', cabinetHint: '', isOwner: false, tenants: [],
+        type: 'flat', typeLabel: '', short: '', address: '', floor: '', ukName: '', ukPhone: '', cabinetUrl: '', cabinetLogin: '', cabinetHint: '', isOwner: false, tenants: [],
       }} />
     </>
   );

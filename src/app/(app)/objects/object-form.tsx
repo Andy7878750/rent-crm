@@ -5,7 +5,7 @@ import { Select } from '@/components/select';
 import { DateInput } from '@/components/date-input';
 import { useActionState, useState } from 'react';
 import { X } from 'lucide-react';
-import { removeObjectType, saveObject, type ObjectFormState } from './actions';
+import { addObjectType, removeObjectType, saveObject, type ObjectFormState } from './actions';
 
 export type ObjectFormValues = {
   type: 'nonres' | 'flat' | 'other'; typeLabel: string; short: string; address: string; floor: string;
@@ -52,7 +52,7 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
                 if (same === 'Нежилое помещение') return 'nonres';
                 if (same === 'Квартира') return 'flat';
                 if (same === 'Другое') return 'other';
-                if (!same) setCustom([...custom, label]);
+                if (!same) { setCustom([...custom, label]); void addObjectType(label); }
                 return `c:${same ?? label}`;
               } }}
               onRemove={(v) => {

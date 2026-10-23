@@ -91,6 +91,15 @@ export async function saveObject(objectId: string | null, _prev: ObjectFormState
   redirect(`/objects/${id}`);
 }
 
+/** Добавить свой тип в список сразу, не дожидаясь сохранения объекта. */
+export async function addObjectType(label: string) {
+  const user = await requireUser();
+  const t = String(label ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
+  if (!t) return;
+  const types = await readObjectTypes(user.accountId);
+  if (!types.some((x) => x.toLowerCase() === t.toLowerCase())) await writeObjectTypes(user.accountId, [...types, t]);
+}
+
 /** Убрать свой тип из списка. Объекты с этим типом его сохраняют. */
 export async function removeObjectType(label: string) {
   const user = await requireUser();

@@ -71,8 +71,8 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
           </div>
           {input('ukName', 'УК / ТСЖ', initial.ukName, { placeholder: 'Название управляющей компании' })}
           <label className="label"><span>Телефон УК / ТСЖ</span>
-            <span className="field"><input name="ukPhone" type="tel" inputMode="tel" autoComplete="off" placeholder="+7 (___) ___-__-__"
-              value={ukPhone} onChange={(ev) => setUkPhone(formatPhone(ev.target.value))} /></span>
+            <span className="field"><input name="ukPhone" type="tel" inputMode="tel" autoComplete="off" placeholder="+7 (___) ___-__-__ или +код страны"
+              value={ukPhone} onChange={(ev) => setUkPhone(formatPhone(ev.target.value, ukPhone))} /></span>
           </label>
           <div className="grid gap-3.5 sm:col-span-2 sm:grid-cols-3">
             {input('cabinetUrl', 'Личный кабинет (ссылка)', initial.cabinetUrl, { placeholder: 'https://' })}
@@ -105,7 +105,7 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
                 <div className="grid gap-3 sm:grid-cols-[1fr_90px_1fr_34px]">
                   <TField label="Имя или название *" value={r.name} onChange={(v) => set(i, 'name', v)} error={e[`t${i}.name`]} />
                   <TField label="Доля, % *" value={r.share} onChange={(v) => set(i, 'share', v)} error={e[`t${i}.share`]} inputMode="decimal" />
-                  <TField label="Телефон" value={r.phone} onChange={(v) => set(i, 'phone', formatPhone(v))} type="tel" inputMode="tel" placeholder="+7 (___) ___-__-__" />
+                  <TField label="Телефон" value={r.phone} onChange={(v) => set(i, 'phone', formatPhone(v, r.phone))} type="tel" inputMode="tel" placeholder="+7 (___) ___-__-__ или +код страны" />
                   <button type="button" aria-label="Убрать арендатора" onClick={() => setRows(rows.filter((_, j) => j !== i))}
                     className="mt-6 flex size-[34px] items-center justify-center rounded-lg text-muted hover:bg-bad-soft hover:text-bad"><X size={16} /></button>
                 </div>

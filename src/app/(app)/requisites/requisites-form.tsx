@@ -17,7 +17,7 @@ export function RequisitesForm({ initial }: { initial: Requisites }) {
   const f = (k: keyof Requisites, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <label className="label"><span>{label}</span>
       <span className={`field ${e[k] ? 'field-err' : ''}`}>
-        <input name={k} value={r[k] as string} onChange={(ev) => set(k, (k === 'phone' ? formatPhone(ev.target.value) : ev.target.value) as never)} {...extra} />
+        <input name={k} value={r[k] as string} onChange={(ev) => set(k, (k === 'phone' ? formatPhone(ev.target.value, r.phone) : ev.target.value) as never)} {...extra} />
       </span>
       {e[k] && <span className="text-[12px] text-[#b4362b]">{e[k]}</span>}
     </label>

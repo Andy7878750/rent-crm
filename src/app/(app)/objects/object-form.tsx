@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { CancelButton } from '../modal';
 import { useActionState, useState } from 'react';
 import { X } from 'lucide-react';
 import { saveObject, type ObjectFormState } from './actions';
@@ -92,7 +92,7 @@ export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string
       <p className="hint">После сохранения привяжите арендаторов к услугам в «Тарифах и услугах» — тогда на странице объекта появятся нужные поля.</p>
       <div className="flex gap-2">
         <button className="btn btn-primary" disabled={pending}>{pending ? 'Сохраняем…' : objectId ? 'Сохранить изменения' : 'Создать объект'}</button>
-        <Link href={cancelHref} className="btn">Отмена</Link>
+        <CancelButton href={cancelHref} />
       </div>
     </form>
   );

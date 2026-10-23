@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { CancelButton } from '../modal';
 import { useActionState, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { KINDS, LOGICS, type LogicField } from '@/lib/calc/logics';
@@ -170,7 +170,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
 
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn btn-primary" disabled={pending}>{pending ? 'Сохраняем…' : serviceId ? 'Сохранить' : 'Создать услугу'}</button>
-        <Link href="/tariffs" className="btn">Отмена</Link>
+        <CancelButton href="/tariffs" />
         <div className="flex-1" />
         {serviceId && (confirm === 'service'
           ? <span className="flex items-center gap-2 text-[13px]">Удалить услугу вместе с суммами и показаниями по ней?

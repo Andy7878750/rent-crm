@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireUser } from '@/lib/auth/session';
+import { readObjectTypes, writeObjectTypes } from '@/lib/data';
 import { isMonth } from '@/lib/month';
 
 export type ObjectFormState = { errors?: Record<string, string> };
@@ -81,8 +82,20 @@ export async function saveObject(objectId: string | null, _prev: ObjectFormState
     }
     return oid;
   });
+  // Новый свой тип запоминаем в списке аккаунта.
+  if (values.typeLabel) {
+    const types = await readObjectTypes(user.accountId);
+    if (!types.includes(values.typeLabel)) await writeObjectTypes(user.accountId, [...types, values.typeLabel]);
+  }
   revalidatePath('/', 'layout');
   redirect(`/objects/${id}`);
+}
+
+/** Убрать свой тип из списка. Объекты с этим типом его сохраняют. */
+export async function removeObjectType(label: string) {
+  const user = await requireUser();
+  const types = await readObjectTypes(user.accountId);
+  if (types.includes(label)) await writeObjectTypes(user.accountId, types.filter((t) => t !== label));
 }
 
 export async function archiveObject(objectId: string) {

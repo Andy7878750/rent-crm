@@ -107,3 +107,15 @@ export async function listInvoices(accountId: string, month?: string) {
     .where(where)
     .orderBy(desc(schema.invoices.month), desc(schema.invoices.createdAt));
 }
+
+/** Свои типы объектов аккаунта (пункты списка «Тип»). */
+export async function readObjectTypes(accountId: string): Promise<string[]> {
+  const [acc] = await db.select({ settings: schema.accounts.settings }).from(schema.accounts).where(eq(schema.accounts.id, accountId)).limit(1);
+  const t = (acc?.settings as { objectTypes?: unknown } | undefined)?.objectTypes;
+  return Array.isArray(t) ? t.filter((x): x is string => typeof x === 'string') : [];
+}
+
+export async function writeObjectTypes(accountId: string, types: string[]) {
+  const [acc] = await db.select({ settings: schema.accounts.settings }).from(schema.accounts).where(eq(schema.accounts.id, accountId)).limit(1);
+  await db.update(schema.accounts).set({ settings: { ...(acc?.settings ?? {}), objectTypes: types } }).where(eq(schema.accounts.id, accountId));
+}

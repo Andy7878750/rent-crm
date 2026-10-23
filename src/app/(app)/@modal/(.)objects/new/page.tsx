@@ -1,6 +1,6 @@
 import { Modal } from '../../../modal';
 import Page from '../../../objects/new/page';
 
-export default function NewObjectModal() {
+export default async function NewObjectModal() {
   return <Modal><Page /></Modal>;
 }

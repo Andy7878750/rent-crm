@@ -5,7 +5,7 @@ import { Select } from '@/components/select';
 import { DateInput } from '@/components/date-input';
 import { useActionState, useState } from 'react';
 import { X } from 'lucide-react';
-import { saveObject, type ObjectFormState } from './actions';
+import { removeObjectType, saveObject, type ObjectFormState } from './actions';
 
 export type ObjectFormValues = {
   type: 'nonres' | 'flat' | 'other'; typeLabel: string; short: string; address: string; floor: string;
@@ -15,10 +15,11 @@ export type ObjectFormValues = {
 
 const blank = () => ({ name: '', share: '', phone: '', email: '', contract: '', contractEnd: '' });
 
-export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string | null; initial: ObjectFormValues; cancelHref: string }) {
+export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: { objectId: string | null; initial: ObjectFormValues; cancelHref: string; customTypes?: string[] }) {
   const [state, action, pending] = useActionState<ObjectFormState, FormData>(saveObject.bind(null, objectId), {});
   const [owner, setOwner] = useState(initial.isOwner);
-  const [type, setType] = useState(initial.type);
+  const [custom, setCustom] = useState(() => initial.typeLabel && !customTypes.includes(initial.typeLabel) ? [...customTypes, initial.typeLabel] : customTypes);
+  const [typeValue, setTypeValue] = useState(initial.type === 'other' && initial.typeLabel ? `c:${initial.typeLabel}` : initial.type);
   const [rows, setRows] = useState(initial.tenants.length ? initial.tenants : [blank()]);
   const e = state.errors ?? {};
   const sum = rows.reduce((a, r) => a + (Number(String(r.share).replace(',', '.')) || 0), 0);
@@ -38,12 +39,28 @@ export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string
         <div className="border-b border-line bg-[#f6f8fb] px-4 py-2.5 eyebrow">Объект и УК / ТСЖ</div>
         <div className="grid gap-3.5 p-4 sm:grid-cols-2">
           <div className="label"><span>Тип <span className="text-[#b4362b]">*</span></span>
-            <Select name="type" defaultValue={initial.type} onChange={(v) => setType(v as typeof type)}
-              options={[{ value: 'nonres', label: 'Нежилое помещение' }, { value: 'flat', label: 'Квартира' }, { value: 'other', label: 'Другое — свой вариант' }]} />
-            {type === 'other' && (
-              <span className="field"><input name="typeLabel" defaultValue={initial.typeLabel} maxLength={40} autoFocus
-                placeholder="Свой вариант: склад, гараж, офис…" aria-label="Свой вариант типа" /></span>
-            )}
+            <input type="hidden" name="type" value={typeValue.startsWith('c:') ? 'other' : typeValue} />
+            <input type="hidden" name="typeLabel" value={typeValue.startsWith('c:') ? typeValue.slice(2) : ''} />
+            <Select value={typeValue} onChange={setTypeValue}
+              options={[
+                { value: 'nonres', label: 'Нежилое помещение' }, { value: 'flat', label: 'Квартира' },
+                ...custom.map((c) => ({ value: `c:${c}`, label: c, removable: true })),
+                { value: 'other', label: 'Другое' },
+              ]}
+              create={{ placeholder: 'свой вариант…', onCreate: (label) => {
+                const same = [...custom, 'Нежилое помещение', 'Квартира', 'Другое'].find((c) => c.toLowerCase() === label.toLowerCase());
+                if (same === 'Нежилое помещение') return 'nonres';
+                if (same === 'Квартира') return 'flat';
+                if (same === 'Другое') return 'other';
+                if (!same) setCustom([...custom, label]);
+                return `c:${same ?? label}`;
+              } }}
+              onRemove={(v) => {
+                const label = v.slice(2);
+                setCustom(custom.filter((c) => c !== label));
+                if (typeValue === v) setTypeValue('other');
+                void removeObjectType(label);
+              }} />
           </div>
           {input('short', <>Короткое название <span className="text-[#b4362b]">*</span></>, initial.short, { placeholder: 'Например, Королёва 61' })}
           <div className="sm:col-span-2 grid gap-3.5 sm:grid-cols-[1fr_120px]">

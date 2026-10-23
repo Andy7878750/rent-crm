@@ -5,7 +5,7 @@ import { Select } from '@/components/select';
 import { DateInput } from '@/components/date-input';
 import { formatPhone } from '@/lib/phone';
 import { useActionState, useState } from 'react';
-import { X } from 'lucide-react';
+import { Eye, EyeOff, X } from 'lucide-react';
 import { addObjectType, removeObjectType, saveObject, type ObjectFormState } from './actions';
 
 export type ObjectFormValues = {
@@ -19,6 +19,7 @@ const blank = () => ({ name: '', share: '', phone: '', email: '', contract: '', 
 export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: { objectId: string | null; initial: ObjectFormValues; cancelHref: string; customTypes?: string[] }) {
   const [state, action, pending] = useActionState<ObjectFormState, FormData>(saveObject.bind(null, objectId), {});
   const [owner, setOwner] = useState(initial.isOwner);
+  const [peekHint, setPeekHint] = useState(false);
   const [ukPhone, setUkPhone] = useState(formatPhone(initial.ukPhone));
   const [custom, setCustom] = useState(() => initial.typeLabel && !customTypes.includes(initial.typeLabel) ? [...customTypes, initial.typeLabel] : customTypes);
   const [typeValue, setTypeValue] = useState(initial.type === 'other' && initial.typeLabel ? `c:${initial.typeLabel}` : initial.type);
@@ -77,7 +78,15 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
           <div className="grid gap-3.5 sm:col-span-2 sm:grid-cols-3">
             {input('cabinetUrl', 'Личный кабинет (ссылка)', initial.cabinetUrl, { placeholder: 'https://' })}
             {input('cabinetLogin', 'Логин', initial.cabinetLogin)}
-            {input('cabinetHint', 'Подсказка к паролю', initial.cabinetHint, { autoComplete: 'off', placeholder: 'сам пароль не храним' })}
+            <label className="label"><span>Подсказка к паролю</span>
+              <span className="field"><input name="cabinetHint" defaultValue={initial.cabinetHint} type={peekHint ? 'text' : 'password'}
+                autoComplete="new-password" placeholder="сам пароль не храним" />
+                <button type="button" onClick={() => setPeekHint(!peekHint)} aria-label={peekHint ? 'Скрыть подсказку' : 'Показать подсказку'}
+                  className="flex size-[30px] flex-none items-center justify-center rounded-md text-faint hover:bg-[#f1f4f7] hover:text-ink">
+                  {peekHint ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </span>
+            </label>
           </div>
         </div>
       </section>
@@ -90,7 +99,7 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
         <input type="hidden" name="owner" value={owner ? '1' : '0'} />
         <input type="hidden" name="tenants" value={JSON.stringify(rows)} />
         <div role="radiogroup" className="flex flex-wrap gap-2 px-4 pt-3">
-          {[[false, 'Арендаторы'], [true, 'Собственник — я сам']].map(([v, l]) => (
+          {[[false, 'Арендаторы'], [true, 'Собственник']].map(([v, l]) => (
             <button key={String(v)} type="button" role="radio" aria-checked={owner === v} onClick={() => setOwner(v as boolean)}
               className={`btn ${owner === v ? 'border-accent bg-[#e8edf2]' : ''}`}>{l as string}</button>
           ))}

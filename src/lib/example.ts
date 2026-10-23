@@ -16,8 +16,8 @@ export async function createExample(tx: Tx, accountId: string, month: string) {
   }).returning({ id: schema.objects.id });
 
   const [t1, t2] = await tx.insert(schema.tenants).values([
-    { objectId: obj.id, name: 'Жаркофф', share: '55', phone: '+7 900 000 00 03', sort: 0 },
-    { objectId: obj.id, name: 'Салон Эгоист', share: '45', phone: '+7 900 000 00 04', sort: 1 },
+    { objectId: obj.id, name: 'Жаркофф', share: '55', phone: '+7 (900) 000-00-03', sort: 0 },
+    { objectId: obj.id, name: 'Салон Эгоист', share: '45', phone: '+7 (900) 000-00-04', sort: 1 },
   ]).returning({ id: schema.tenants.id });
 
   const svc = async (sort: number, supplier: string, name: string, unit: string, kind: 'common' | 'indiv' | 'owner') =>

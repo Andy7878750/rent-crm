@@ -15,7 +15,7 @@ export default async function EditObjectPage({ params }: PageProps<'/objects/[id
   const customTypes = await readObjectTypes(user.accountId);
   return (
     <>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 pr-11">
         <h1 className="text-[22px] font-bold">Изменить объект</h1>
         <div className="flex-1" />
         <form action={archiveObject.bind(null, o.id)}>

@@ -3,6 +3,7 @@
 import { CancelButton } from '../modal';
 import { Select } from '@/components/select';
 import { DateInput } from '@/components/date-input';
+import { formatPhone } from '@/lib/phone';
 import { useActionState, useState } from 'react';
 import { X } from 'lucide-react';
 import { addObjectType, removeObjectType, saveObject, type ObjectFormState } from './actions';
@@ -18,9 +19,10 @@ const blank = () => ({ name: '', share: '', phone: '', email: '', contract: '', 
 export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: { objectId: string | null; initial: ObjectFormValues; cancelHref: string; customTypes?: string[] }) {
   const [state, action, pending] = useActionState<ObjectFormState, FormData>(saveObject.bind(null, objectId), {});
   const [owner, setOwner] = useState(initial.isOwner);
+  const [ukPhone, setUkPhone] = useState(formatPhone(initial.ukPhone));
   const [custom, setCustom] = useState(() => initial.typeLabel && !customTypes.includes(initial.typeLabel) ? [...customTypes, initial.typeLabel] : customTypes);
   const [typeValue, setTypeValue] = useState(initial.type === 'other' && initial.typeLabel ? `c:${initial.typeLabel}` : initial.type);
-  const [rows, setRows] = useState(initial.tenants.length ? initial.tenants : [blank()]);
+  const [rows, setRows] = useState(initial.tenants.length ? initial.tenants.map((t) => ({ ...t, phone: formatPhone(t.phone) })) : [blank()]);
   const e = state.errors ?? {};
   const sum = rows.reduce((a, r) => a + (Number(String(r.share).replace(',', '.')) || 0), 0);
   const set = (i: number, k: keyof ReturnType<typeof blank>, v: string) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
@@ -68,10 +70,15 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
             {input('floor', 'Этаж', initial.floor)}
           </div>
           {input('ukName', 'УК / ТСЖ', initial.ukName, { placeholder: 'Название управляющей компании' })}
-          {input('ukPhone', 'Телефон УК / ТСЖ', initial.ukPhone, { type: 'tel', placeholder: '+7' })}
-          {input('cabinetUrl', 'Личный кабинет (ссылка)', initial.cabinetUrl, { placeholder: 'https://' })}
-          {input('cabinetLogin', 'Логин', initial.cabinetLogin)}
-          <div className="sm:col-span-2">{input('cabinetHint', 'Подсказка к паролю (сам пароль не храним)', initial.cabinetHint, { autoComplete: 'off' })}</div>
+          <label className="label"><span>Телефон УК / ТСЖ</span>
+            <span className="field"><input name="ukPhone" type="tel" inputMode="tel" autoComplete="off" placeholder="+7 (___) ___-__-__"
+              value={ukPhone} onChange={(ev) => setUkPhone(formatPhone(ev.target.value))} /></span>
+          </label>
+          <div className="grid gap-3.5 sm:col-span-2 sm:grid-cols-3">
+            {input('cabinetUrl', 'Личный кабинет (ссылка)', initial.cabinetUrl, { placeholder: 'https://' })}
+            {input('cabinetLogin', 'Логин', initial.cabinetLogin)}
+            {input('cabinetHint', 'Подсказка к паролю', initial.cabinetHint, { autoComplete: 'off', placeholder: 'сам пароль не храним' })}
+          </div>
         </div>
       </section>
 
@@ -94,15 +101,19 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
           <div className="flex flex-col">
             {e.shares && <p className="mx-4 mt-3 rounded-lg bg-bad-soft px-3 py-2 text-[13px] text-bad">{e.shares}</p>}
             {rows.map((r, i) => (
-              <div key={i} className="grid gap-3 border-b border-[#edf0f5] px-4 py-3.5 sm:grid-cols-[1fr_90px_1fr_34px]">
-                <TField label="Имя или название *" value={r.name} onChange={(v) => set(i, 'name', v)} error={e[`t${i}.name`]} />
-                <TField label="Доля, % *" value={r.share} onChange={(v) => set(i, 'share', v)} error={e[`t${i}.share`]} inputMode="decimal" />
-                <TField label="Телефон" value={r.phone} onChange={(v) => set(i, 'phone', v)} type="tel" />
-                <button type="button" aria-label="Убрать арендатора" onClick={() => setRows(rows.filter((_, j) => j !== i))}
-                  className="mt-6 flex size-[34px] items-center justify-center rounded-lg text-muted hover:bg-bad-soft hover:text-bad"><X size={16} /></button>
-                <TField label="Почта (для счёта)" value={r.email} onChange={(v) => set(i, 'email', v)} type="email" />
-                <TField label="Договор" value={r.contract} onChange={(v) => set(i, 'contract', v)} />
-                <div className="label"><span>Договор до</span><DateInput value={r.contractEnd} onChange={(v) => set(i, 'contractEnd', v)} /></div>
+              <div key={i} className="flex flex-col gap-3 border-b border-[#edf0f5] px-4 py-3.5">
+                <div className="grid gap-3 sm:grid-cols-[1fr_90px_1fr_34px]">
+                  <TField label="Имя или название *" value={r.name} onChange={(v) => set(i, 'name', v)} error={e[`t${i}.name`]} />
+                  <TField label="Доля, % *" value={r.share} onChange={(v) => set(i, 'share', v)} error={e[`t${i}.share`]} inputMode="decimal" />
+                  <TField label="Телефон" value={r.phone} onChange={(v) => set(i, 'phone', formatPhone(v))} type="tel" inputMode="tel" placeholder="+7 (___) ___-__-__" />
+                  <button type="button" aria-label="Убрать арендатора" onClick={() => setRows(rows.filter((_, j) => j !== i))}
+                    className="mt-6 flex size-[34px] items-center justify-center rounded-lg text-muted hover:bg-bad-soft hover:text-bad"><X size={16} /></button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)_170px_34px]">
+                  <TField label="Почта (для счёта)" value={r.email} onChange={(v) => set(i, 'email', v)} type="email" />
+                  <TField label="Договор" value={r.contract} onChange={(v) => set(i, 'contract', v)} placeholder="№ и дата" />
+                  <div className="label"><span>Договор до</span><DateInput value={r.contractEnd} onChange={(v) => set(i, 'contractEnd', v)} /></div>
+                </div>
               </div>
             ))}
             <div className="px-4 py-3">

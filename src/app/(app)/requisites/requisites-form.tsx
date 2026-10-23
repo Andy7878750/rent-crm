@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
+import { formatPhone } from '@/lib/phone';
 import { reportFooter, type Requisites } from '@/lib/requisites';
 import { saveRequisites, type ReqState } from './actions';
 
@@ -16,7 +17,7 @@ export function RequisitesForm({ initial }: { initial: Requisites }) {
   const f = (k: keyof Requisites, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <label className="label"><span>{label}</span>
       <span className={`field ${e[k] ? 'field-err' : ''}`}>
-        <input name={k} value={r[k] as string} onChange={(ev) => set(k, ev.target.value as never)} {...extra} />
+        <input name={k} value={r[k] as string} onChange={(ev) => set(k, (k === 'phone' ? formatPhone(ev.target.value) : ev.target.value) as never)} {...extra} />
       </span>
       {e[k] && <span className="text-[12px] text-[#b4362b]">{e[k]}</span>}
     </label>
@@ -41,7 +42,7 @@ export function RequisitesForm({ initial }: { initial: Requisites }) {
           </div>
           {f('address', 'Адрес', { placeholder: 'для отчёта не обязателен' })}
           <div className="grid gap-3 sm:grid-cols-2">
-            {f('phone', 'Телефон для вопросов', { type: 'tel', placeholder: '+7' })}
+            {f('phone', 'Телефон для вопросов', { type: 'tel', inputMode: 'tel', placeholder: '+7 (___) ___-__-__' })}
             {f('email', 'Почта', { type: 'email', placeholder: 'name@mail.ru' })}
           </div>
           <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" name="noVat" checked={r.noVat} onChange={() => set('noVat', !r.noVat)} /> Работаю без НДС — писать «без НДС» в отчёте</label>

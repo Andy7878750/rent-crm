@@ -1,6 +1,7 @@
 'use client';
 
 import { CancelButton } from '../modal';
+import { DateInput } from '@/components/date-input';
 import { useActionState, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { KINDS, LOGICS, type LogicField } from '@/lib/calc/logics';
@@ -154,9 +155,9 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
                 </div>
               )}
 
-              <label className="label max-w-[220px]"><span>Действует с</span>
-                <span className={`field ${e[`t${i}.validFrom`] ? 'field-err' : ''}`}><input type="date" value={t.validFrom} onChange={(ev) => setT(i, { validFrom: ev.target.value })} /></span>
-                {err(`t${i}.validFrom`)}</label>
+              <div className="label max-w-[220px]"><span>Действует с</span>
+                <DateInput value={t.validFrom} onChange={(v) => setT(i, { validFrom: v })} error={!!e[`t${i}.validFrom`]} />
+                {err(`t${i}.validFrom`)}</div>
             </div>
           </section>
         );

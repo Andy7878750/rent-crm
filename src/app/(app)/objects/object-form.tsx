@@ -2,6 +2,7 @@
 
 import { CancelButton } from '../modal';
 import { Select } from '@/components/select';
+import { DateInput } from '@/components/date-input';
 import { useActionState, useState } from 'react';
 import { X } from 'lucide-react';
 import { saveObject, type ObjectFormState } from './actions';
@@ -79,7 +80,7 @@ export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string
                   className="mt-6 flex size-[34px] items-center justify-center rounded-lg text-muted hover:bg-bad-soft hover:text-bad"><X size={16} /></button>
                 <TField label="Почта (для счёта)" value={r.email} onChange={(v) => set(i, 'email', v)} type="email" />
                 <TField label="Договор" value={r.contract} onChange={(v) => set(i, 'contract', v)} />
-                <TField label="Договор до" value={r.contractEnd} onChange={(v) => set(i, 'contractEnd', v)} type="date" />
+                <div className="label"><span>Договор до</span><DateInput value={r.contractEnd} onChange={(v) => set(i, 'contractEnd', v)} /></div>
               </div>
             ))}
             <div className="px-4 py-3">

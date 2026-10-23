@@ -21,8 +21,8 @@ export const LOGICS: Record<Logic, { label: string; formula: string; fields: Log
 
 export const KINDS: Record<ServiceKind, { label: string; hint: string; pill: string; logics: Logic[] }> = {
   common: { label: 'Общий счёт', hint: 'один счёт на объект, делится между арендаторами', pill: 'bg-ok-soft text-ok', logics: ['share', 'split', 'meterRest', 'fixed'] },
-  indiv: { label: 'Индивидуальный', hint: 'свой счётчик или своя сумма арендатора', pill: 'bg-[#e3eaf7] text-[#1d4596]', logics: ['meter', 'dn', 'derived', 'norm', 'fixed'] },
-  owner: { label: 'Только арендодатель', hint: 'арендаторы не видят', pill: 'bg-[#eef0f3] text-[#3a475d]', logics: ['whole'] },
+  indiv: { label: 'Индивидуальный', hint: 'свой счётчик или своя сумма арендатора', pill: 'bg-accent-soft text-accent', logics: ['meter', 'dn', 'derived', 'norm', 'fixed'] },
+  owner: { label: 'Только арендодатель', hint: 'арендаторы не видят', pill: 'bg-[#eef0f3] text-ink-2', logics: ['whole'] },
 };
 
 export const FIELD_LABEL: Record<LogicField, string> = {

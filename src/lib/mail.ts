@@ -33,13 +33,13 @@ type Letter = { to: string; subject: string; title: string; text: string; button
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 function html(l: Letter) {
-  return `<!doctype html><html lang="ru"><body style="margin:0;background:#f2f4f8;font-family:Arial,Helvetica,sans-serif;color:#1b2333">
+  return `<!doctype html><html lang="ru"><body style="margin:0;background:#f2f4f8;font-family:Arial,Helvetica,sans-serif;color:#2c3e50">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 12px"><tr><td align="center">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fff;border-radius:12px;border:1px solid #e3e8ef">
-<tr><td style="padding:28px 32px 0;font-weight:bold;font-size:16px"><span style="display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;background:#2152b8;color:#fff;border-radius:7px;margin-right:8px">Р</span>Расчётка</td></tr>
+<tr><td style="padding:28px 32px 0;font-weight:bold;font-size:16px"><span style="display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;background:#c8663b;color:#fff;border-radius:7px;margin-right:8px">Р</span>Расчётка</td></tr>
 <tr><td style="padding:20px 32px 0;font-size:20px;font-weight:bold">${esc(l.title)}</td></tr>
 <tr><td style="padding:10px 32px 0;font-size:15px;line-height:1.5;color:#3d4757">${esc(l.text)}</td></tr>
-<tr><td style="padding:22px 32px"><a href="${esc(l.url)}" style="display:inline-block;background:#2152b8;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px">${esc(l.button)}</a></td></tr>
+<tr><td style="padding:22px 32px"><a href="${esc(l.url)}" style="display:inline-block;background:#c8663b;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px">${esc(l.button)}</a></td></tr>
 <tr><td style="padding:0 32px 26px;font-size:12px;line-height:1.5;color:#7a8597">${esc(l.note)}<br>Если кнопка не нажимается, скопируйте ссылку: <span style="word-break:break-all">${esc(l.url)}</span></td></tr>
 </table></td></tr></table></body></html>`;
 }

@@ -62,7 +62,7 @@ export function ObjectForm({ objectId, initial, cancelHref }: { objectId: string
         <div role="radiogroup" className="flex flex-wrap gap-2 px-4 pt-3">
           {[[false, 'Арендаторы'], [true, 'Собственник — я сам']].map(([v, l]) => (
             <button key={String(v)} type="button" role="radio" aria-checked={owner === v} onClick={() => setOwner(v as boolean)}
-              className={`btn ${owner === v ? 'border-accent bg-[#e3eaf7]' : ''}`}>{l as string}</button>
+              className={`btn ${owner === v ? 'border-accent bg-[#e8edf2]' : ''}`}>{l as string}</button>
           ))}
         </div>
         {owner ? (

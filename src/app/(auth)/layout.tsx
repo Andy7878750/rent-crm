@@ -21,7 +21,7 @@ export default function AuthLayout({ children }: LayoutProps<'/'>) {
         <ul className="flex max-w-[520px] flex-col gap-3.5">
           {perks.map((p) => (
             <li key={p.t} className="flex items-start gap-3">
-              <span className="flex size-8 flex-none items-center justify-center rounded-lg bg-[#f2f5fa] text-accent"><Check size={16} strokeWidth={2.4} /></span>
+              <span className="flex size-8 flex-none items-center justify-center rounded-lg bg-[#f1f4f7] text-accent"><Check size={16} strokeWidth={2.4} /></span>
               <span><b className="font-semibold">{p.t}</b><span className="mt-0.5 block text-muted">{p.d}</span></span>
             </li>
           ))}

@@ -49,7 +49,7 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
 
   const chip = (id: string, label: string) => (
     <Link key={id} href={id === 'all' ? '/tariffs' : `/tariffs?o=${id}`} aria-pressed={filter === id}
-      className={`rounded-full border px-3.5 py-1.5 font-semibold ${filter === id ? 'border-nav bg-nav text-white' : 'border-line-strong bg-white text-[#3a475d]'}`}>{label}</Link>
+      className={`rounded-full border px-3.5 py-1.5 font-semibold ${filter === id ? 'border-nav bg-nav text-white' : 'border-line-strong bg-white text-[#4d5f71]'}`}>{label}</Link>
   );
 
   return (
@@ -93,11 +93,11 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
                         <span className="flex items-center gap-2.5"><span className="flex-1 font-semibold">{p} <span className="text-[12px] font-normal text-muted">{u}</span></span>
                           <span className="text-[12px] text-muted">с {date(t.from)}</span></span>
                         <span className="flex flex-wrap items-center gap-2">
-                          <span className="pill bg-[#eef0f3] text-[#3a475d]">{LOGICS[t.logic].label}</span>
+                          <span className="pill bg-[#eef0f3] text-[#4d5f71]">{LOGICS[t.logic].label}</span>
                           <span className="text-[11px] text-muted">{(t.logic === 'derived' || t.logic === 'norm') && t.sources?.length
                             ? `(${t.sources.map((x) => svcName.get(x) ?? '?').join(' + ')})${t.logic === 'norm' ? ' × норматив' : ''} × цена` : LOGICS[t.logic].formula}</span>
                         </span>
-                        {s.kind === 'owner' ? <span className="pill self-start bg-[#eef0f3] text-[#3a475d]">Платит арендодатель</span>
+                        {s.kind === 'owner' ? <span className="pill self-start bg-[#eef0f3] text-[#4d5f71]">Платит арендодатель</span>
                           : who === null ? <span className="pill self-start bg-ok-soft text-ok">Все арендаторы</span>
                           : <span className="text-[13px] leading-snug text-ink-2">{who}</span>}
                       </span>

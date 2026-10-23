@@ -109,11 +109,11 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
 
   // Тёмная полоса: логотип, в свёрнутом виде — значки разделов (подменю выпадает рядом), внизу — настройки.
   const stripBtn = (on: boolean) =>
-    `flex size-10 items-center justify-center rounded-[10px] ${on ? 'bg-nav-on text-white' : 'text-[#9aa8c2] hover:bg-nav-on/60 hover:text-white'}`;
+    `flex size-10 items-center justify-center rounded-[10px] ${on ? 'bg-nav-on text-white' : 'text-[#aab6c2] hover:bg-nav-on/60 hover:text-white'}`;
   const strip = (
     <nav aria-label="Панель" className="sticky top-0 z-40 hidden h-screen w-[60px] flex-none flex-col items-center gap-1.5 bg-nav pt-3 lg:flex"
       onMouseLeave={() => setFly(null)}>
-      <Link href="/objects" aria-label="Расчётка — на главную" className="mb-3 flex size-[34px] items-center justify-center rounded-[9px] bg-accent text-[16px] font-bold text-white">Р</Link>
+      <Link href="/objects" aria-label="Расчётка — на главную" className="mb-3 flex size-[34px] items-center justify-center rounded-[9px] bg-cta text-[16px] font-bold text-white">Р</Link>
       {mini && groups.map((g) => {
         const Icon = g.icon;
         const on = activeGroup === g.id;
@@ -161,7 +161,7 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
 
   const logo = (
     <Link href="/objects" className="flex items-center gap-2.5" aria-label="Расчётка — на главную">
-      <span aria-hidden className="flex size-[30px] flex-none items-center justify-center rounded-[8px] bg-accent text-[15px] font-bold text-white">Р</span>
+      <span aria-hidden className="flex size-[30px] flex-none items-center justify-center rounded-[8px] bg-cta text-[15px] font-bold text-white">Р</span>
       <span className="text-[17px] font-bold">Расчётка</span>
     </Link>
   );
@@ -183,7 +183,7 @@ export function Shell({ user, objects, children }: { user: { name: string; accou
       )}
       {mobile && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-[#1b2433]/30" onClick={() => setMobile(false)} />
+          <div className="absolute inset-0 bg-[#2c3e50]/30" onClick={() => setMobile(false)} />
           <aside aria-label="Меню" className="absolute inset-y-0 left-0 flex w-[272px] flex-col bg-white shadow-xl">
             <div className="flex h-[60px] flex-none items-center justify-between border-b border-line px-5">{logo}
               <button onClick={() => setMobile(false)} aria-label="Закрыть меню" className="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-[#f1f4f8]"><X size={20} /></button>

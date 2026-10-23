@@ -34,7 +34,7 @@ export default async function IssuedPage({ searchParams }: PageProps<'/bills/iss
       <div role="group" aria-label="Фильтр по оплате" className="flex flex-wrap gap-2">
         {FILTERS.map(([k, l]) => (
           <Link key={k} href={k === 'all' ? '/bills/issued' : `/bills/issued?f=${k}`} aria-pressed={f === k}
-            className={`rounded-full border px-3.5 py-1.5 font-semibold ${f === k ? 'border-nav bg-nav text-white' : 'border-line-strong bg-white text-[#3a475d]'}`}>{l}</Link>
+            className={`rounded-full border px-3.5 py-1.5 font-semibold ${f === k ? 'border-nav bg-nav text-white' : 'border-line-strong bg-white text-[#4d5f71]'}`}>{l}</Link>
         ))}
       </div>
       <div className="card overflow-x-auto">

@@ -52,7 +52,7 @@ export default async function ToIssuePage({ searchParams }: PageProps<'/bills'>)
                 <Link role="cell" href={`/objects/${o.id}?m=${month}&t=${t.id}`} className="group min-w-0" title={ok ? 'Открыть объект' : bill.missing.join('\n')}>
                   <b className="block truncate font-semibold group-hover:text-accent group-hover:underline">{t.name}</b><span className="hint">{o.short}</span>
                 </Link>
-                <span role="cell"><span className={`pill ${ok ? 'bg-[#e3eaf7] text-[#1d4596]' : 'bg-bad-soft text-bad'}`}>{!bill.serviceCount ? 'Нет услуг' : ok ? 'Готов к счёту' : 'Нет показаний'}</span></span>
+                <span role="cell"><span className={`pill ${ok ? 'bg-[#e8edf2] text-[#2c3e50]' : 'bg-bad-soft text-bad'}`}>{!bill.serviceCount ? 'Нет услуг' : ok ? 'Готов к счёту' : 'Нет показаний'}</span></span>
                 <span role="cell" className={`text-right font-semibold ${ok ? '' : 'text-faint'}`} title={ok ? undefined : 'Предварительно: не все данные внесены'}>{bill.serviceCount ? fmtMoney(bill.total) : '—'}</span>
                 <span role="cell" className="flex flex-wrap justify-end gap-2">
                   <Link href={`/report/${t.id}?m=${month}`} target="_blank" className="btn px-3 py-1.5 text-[13px]">Отчёт PDF</Link>

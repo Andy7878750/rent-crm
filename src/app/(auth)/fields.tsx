@@ -24,7 +24,7 @@ export function PasswordField({ label, error, autoComplete, onValue, value, righ
         <input name="password" type={peek ? 'text' : 'password'} autoComplete={autoComplete} placeholder="••••••••" aria-invalid={!!error}
           value={value} onChange={(e) => onValue?.(e.target.value)} />
         <button type="button" onClick={() => setPeek(!peek)} aria-label={peek ? 'Скрыть пароль' : 'Показать пароль'}
-          className="flex size-[30px] items-center justify-center rounded-md text-faint hover:bg-[#f2f5fa]">
+          className="flex size-[30px] items-center justify-center rounded-md text-faint hover:bg-[#f1f4f7]">
           {peek ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </span>

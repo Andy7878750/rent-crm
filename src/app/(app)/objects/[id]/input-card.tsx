@@ -22,7 +22,7 @@ export function InputCard(p: {
   const [saved, setSaved] = useState(false);
   const commit = (fn: () => Promise<unknown>) => start(async () => { await fn(); setSaved(true); router.refresh(); });
 
-  const st = !p.serviceCount ? ['Нет услуг', 'bg-[#eef0f3] text-[#3a475d]'] : p.missing ? ['Не всё внесено', 'bg-bad-soft text-bad'] : ['Внесено', 'bg-ok-soft text-ok'];
+  const st = !p.serviceCount ? ['Нет услуг', 'bg-[#eef0f3] text-[#4d5f71]'] : p.missing ? ['Не всё внесено', 'bg-bad-soft text-bad'] : ['Внесено', 'bg-ok-soft text-ok'];
   const step = (n: number, t: string) => (
     <div className="flex items-center gap-2"><span className="flex size-[22px] items-center justify-center rounded-full bg-accent text-[12px] font-bold text-white">{n}</span><b className="font-semibold">{t}</b></div>
   );
@@ -36,7 +36,7 @@ export function InputCard(p: {
       </div>
       <div className="flex flex-col gap-4 px-[18px] pb-4">
         {!p.serviceCount && (
-          <div className="flex flex-col items-start gap-2.5 rounded-[10px] border border-dashed border-[#c9d2df] p-3.5">
+          <div className="flex flex-col items-start gap-2.5 rounded-[10px] border border-dashed border-[#c9d1da] p-3.5">
             <span>К арендатору не привязана ни одна услуга. Привяжите его к тарифам — и здесь появятся поля.</span>
             <Link href="/tariffs" className="btn btn-primary">Открыть «Тарифы и услуги»</Link>
           </div>

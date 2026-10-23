@@ -6,7 +6,7 @@ import { cancelInvoice, issueInvoices, togglePaid } from './actions';
 export function IssueButton({ month, tenantId, disabled }: { month: string; tenantId: string; disabled: boolean }) {
   const [pending, start] = useTransition();
   return (
-    <button className="btn btn-primary px-3 py-1.5 text-[13px]" disabled={disabled || pending}
+    <button className="btn px-3 py-1.5 text-[13px]" disabled={disabled || pending}
       title={disabled ? 'Сначала внесите все показания' : 'Счёт уйдёт в «Выставленные»'}
       onClick={() => start(async () => { await issueInvoices(month, [tenantId]); })}>
       {pending ? 'Отмечаем…' : 'Отметить выставленным'}
@@ -31,7 +31,7 @@ export function PaidToggle({ id, paidOn, late }: { id: string; paidOn: string | 
     <button aria-pressed={!!paidOn} disabled={pending} onClick={() => start(() => togglePaid(id))}
       title={paidOn ? 'Снять отметку об оплате' : 'Отметить: оплачен сегодня'}
       className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border py-1 pl-1 pr-2.5 text-[13px] ${cls}`}>
-      <span aria-hidden className={`flex size-[22px] items-center justify-center rounded-full border-[1.5px] text-[12px] font-bold ${paidOn ? 'border-[#1f8a55] bg-[#1f8a55] text-white' : 'border-[#b9c3d3] bg-white text-transparent'}`}>✓</span>
+      <span aria-hidden className={`flex size-[22px] items-center justify-center rounded-full border-[1.5px] text-[12px] font-bold ${paidOn ? 'border-[#1f8a55] bg-[#1f8a55] text-white' : 'border-[#bcc5cf] bg-white text-transparent'}`}>✓</span>
       {paidOn ? `оплачен ${paidOn.slice(8, 10)}.${paidOn.slice(5, 7)}` : late ? 'просрочен' : 'ждём оплату'}
     </button>
   );

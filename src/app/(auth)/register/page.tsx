@@ -9,7 +9,7 @@ function strength(p: string) {
   if (!p) return 0;
   return Math.min(4, (p.length >= 8 ? 1 : 0) + (/[A-ZА-Я]/.test(p) && /[a-zа-я]/.test(p) ? 1 : 0) + (/\d/.test(p) ? 1 : 0) + (/[^\wА-Яа-я]/.test(p) || p.length >= 12 ? 1 : 0));
 }
-const COLORS = ['#e6eaf0', '#d4553a', '#e2a23b', '#7fb069', '#2e9e62'];
+const COLORS = ['#e6eaee', '#d4553a', '#e2a23b', '#7fb069', '#2e9e62'];
 const TEXT = ['Не короче 8 символов', 'Слабый пароль', 'Средний пароль', 'Хороший пароль', 'Надёжный пароль'];
 
 export default function RegisterPage() {
@@ -52,7 +52,7 @@ export default function RegisterPage() {
         </div>
         <div className="flex flex-col gap-1">
           <label className={`flex cursor-pointer items-start gap-2 -mx-2.5 rounded-lg border px-2.5 py-2 text-[13px] leading-snug text-ink-2 ${e.consent ? 'border-[#d4553a] bg-bad-soft' : 'border-transparent'}`}>
-            <input type="checkbox" name="consent" className="mt-0.5" checked={consent} aria-invalid={!!e.consent}
+            <input key={JSON.stringify(state)} type="checkbox" name="consent" className="mt-0.5" checked={consent} aria-invalid={!!e.consent}
               onChange={() => { setConsent(!consent); clear('consent'); }} />
             <span>Согласен с <Link href="/privacy" className="font-semibold text-accent">политикой конфиденциальности</Link> и даю <Link href="/privacy#consent" className="font-semibold text-accent">согласие на обработку персональных данных</Link></span>
           </label>

@@ -54,7 +54,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
           <div role="radiogroup" className="grid gap-2 sm:grid-cols-3">
             {(Object.keys(KINDS) as ServiceKind[]).map((k) => (
               <button key={k} type="button" role="radio" aria-checked={d.kind === k} onClick={() => setKind(k)}
-                className={`rounded-lg border px-3 py-2.5 text-left ${d.kind === k ? 'border-2 border-accent bg-[#f5f8ff]' : 'border-line-strong bg-white'}`}>
+                className={`rounded-lg border px-3 py-2.5 text-left ${d.kind === k ? 'border-2 border-accent bg-[#f2f5f8]' : 'border-line-strong bg-white'}`}>
                 <b className="block font-semibold">{KINDS[k].label}</b><span className="hint">{KINDS[k].hint}</span>
               </button>
             ))}
@@ -109,7 +109,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
                     {others.map((o) => {
                       const on = t.sources.includes(o.id);
                       return (
-                        <label key={o.id} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 ${on ? 'border-accent bg-[#f5f8ff]' : 'border-line-strong'}`}>
+                        <label key={o.id} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 ${on ? 'border-accent bg-[#f2f5f8]' : 'border-line-strong'}`}>
                           <input type="checkbox" checked={on} onChange={() => setT(i, { sources: on ? t.sources.filter((x) => x !== o.id) : [...t.sources, o.id] })} />
                           {o.name} <span className="hint">{o.supplier}</span>
                         </label>

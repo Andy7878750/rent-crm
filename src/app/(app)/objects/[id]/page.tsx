@@ -31,8 +31,8 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
   const statusOf = (tid: string) => {
     const b = res.tenants[tid];
     if (issued.has(tid)) return { text: 'Счёт выставлен', cls: 'bg-ok-soft text-ok' };
-    if (!b || !b.serviceCount) return { text: 'Нет услуг', cls: 'bg-[#eef0f3] text-[#3a475d]' };
-    return b.missing.length ? { text: 'Нет показаний', cls: 'bg-bad-soft text-bad' } : { text: 'Готов к счёту', cls: 'bg-[#e3eaf7] text-[#1d4596]' };
+    if (!b || !b.serviceCount) return { text: 'Нет услуг', cls: 'bg-[#eef0f3] text-[#4d5f71]' };
+    return b.missing.length ? { text: 'Нет показаний', cls: 'bg-bad-soft text-bad' } : { text: 'Готов к счёту', cls: 'bg-[#e8edf2] text-[#2c3e50]' };
   };
 
   // Поля «Ввода данных» для выбранного арендатора.
@@ -100,14 +100,14 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
                     const st = statusOf(t.id); const on = tenant?.id === t.id;
                     return (
                       <Link key={t.id} href={`/objects/${obj.id}?m=${month}&t=${t.id}`} aria-current={on ? 'true' : undefined}
-                        className={`rounded-[10px] border px-3.5 py-3 ${on ? 'border-2 border-accent bg-[#f5f8ff]' : 'border-line hover:border-line-strong'}`}>
+                        className={`rounded-[10px] border px-3.5 py-3 ${on ? 'border-2 border-accent bg-[#f2f5f8]' : 'border-line hover:border-line-strong'}`}>
                         <span className="flex items-baseline justify-between gap-2"><b className="truncate text-[15px] font-semibold">{t.name}</b><span className="hint">доля {pctTxt(Number(t.share))}</span></span>
                         <span className="mt-1.5 flex items-center justify-between gap-2"><span className="hint">{t.phone}</span><span className={`pill ${st.cls}`}>{st.text}</span></span>
                       </Link>
                     );
                   })}
                 </div>
-                <Link href={`/objects/${obj.id}/edit`} className="mt-2.5 block rounded-lg border border-dashed border-[#b9c3d3] px-2.5 py-2 font-semibold text-accent">+ Добавить арендатора</Link>
+                <Link href={`/objects/${obj.id}/edit`} className="mt-2.5 block rounded-lg border border-dashed border-[#bcc5cf] px-2.5 py-2 font-semibold text-accent">+ Добавить арендатора</Link>
               </>
             )}
           </div>
@@ -131,7 +131,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
             </div>
             <div className="flex flex-col gap-3 px-[18px] pb-4">
               {groups.map(([title, ls]) => (
-                <div key={title} className="overflow-hidden rounded-[10px] border border-[#e6eaf0]">
+                <div key={title} className="overflow-hidden rounded-[10px] border border-[#e6eaee]">
                   <div className="flex justify-between bg-[#f3f5f9] px-3 py-2 font-semibold"><span>{title}</span><span>{fmtMoney(ls.reduce((a, l) => a + (l.amount ?? 0), 0))}</span></div>
                   {ls.map((l, i) => (
                     <div key={i} className="flex justify-between gap-3 border-t border-[#f0f2f6] px-3 py-2">

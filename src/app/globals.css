@@ -1,27 +1,31 @@
 @import "tailwindcss";
 @import "@fontsource-variable/golos-text";
 
-/* Дизайн-токены (ТЗ, раздел 12): светлый фон, белые карточки, акцентный синий. */
+/* Дизайн-токены: основной #34495e (сланцевый), терракота для главных действий, остальное — оттенки серого. */
 @theme {
   --font-sans: "Golos Text Variable", "Segoe UI", system-ui, sans-serif;
-  --color-bg: #f3f5f8;
+  --color-bg: #f4f6f8;
   --color-card: #ffffff;
-  --color-line: #e3e8ef;
-  --color-line-strong: #d3dae5;
-  --color-ink: #1b2433;
-  --color-ink-2: #4a5872;
-  --color-muted: #6b778c;
-  --color-faint: #8a95a8;
-  --color-accent: #2453b8;
-  --color-accent-soft: #e8effc;
-  --color-nav: #17223a;
-  --color-nav-on: #2b3a57;
-  --color-ok: #1f6b45;
+  --color-line: #e2e7ec;
+  --color-line-strong: #cfd6de;
+  --color-ink: #2c3e50;
+  --color-ink-2: #4d5f71;
+  --color-muted: #6d7b8a;
+  --color-faint: #8f9ba7;
+  --color-accent: #34495e;
+  --color-accent-soft: #e8edf2;
+  /* Терракота — только для главных действий (кнопка, логотип). */
+  --color-cta: #c8663b;
+  --color-cta-hover: #ad5530;
+  --color-cta-soft: #f8e9e1;
+  --color-nav: #34495e;
+  --color-nav-on: #4a6076;
+  --color-ok: #2f7a55;
   --color-ok-soft: #e4f3ea;
-  --color-bad: #9c3420;
+  --color-bad: #a8433a;
   --color-bad-soft: #fbe9e4;
   --color-warn-soft: #fff8e6;
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+  --shadow-card: 0 1px 2px rgba(44, 62, 80, 0.04), 0 8px 24px rgba(44, 62, 80, 0.06);
 }
 
 html, body { background: var(--color-bg); color: var(--color-ink); }
@@ -40,7 +44,7 @@ body { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
   .field-err { @apply border-[#d4553a]; }
   .label { @apply flex flex-col gap-1.5 text-[13px] text-ink-2; }
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-4 py-2.5 text-[14px] font-semibold text-ink transition hover:bg-[#f6f8fb] disabled:cursor-default disabled:opacity-40; }
-  .btn-primary { @apply border-accent bg-accent text-white hover:bg-[#1d469d]; }
+  .btn-primary { @apply border-cta bg-cta text-white hover:border-cta-hover hover:bg-cta-hover; }
   .pill { @apply inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-semibold; }
   .eyebrow { @apply text-[12px] font-semibold uppercase tracking-[0.06em] text-ink; }
   .hint { @apply text-[12px] text-muted; }

@@ -31,7 +31,7 @@ export function RequisitesForm({ initial }: { initial: Requisites }) {
           <div role="radiogroup" className="flex flex-wrap gap-2">
             {KINDS.map(([k, l]) => (
               <button key={k} type="button" role="radio" aria-checked={r.kind === k} onClick={() => set('kind', k)}
-                className={`btn ${r.kind === k ? 'border-accent bg-[#e3eaf7]' : ''}`}>{l}</button>
+                className={`btn ${r.kind === k ? 'border-accent bg-[#e8edf2]' : ''}`}>{l}</button>
             ))}
           </div>
           {f('name', 'Как подписывать отчёт', { placeholder: 'ИП Иванов И. И.' })}
@@ -62,7 +62,7 @@ export function RequisitesForm({ initial }: { initial: Requisites }) {
 
       <section className="card p-[18px]">
         <div className="eyebrow mb-2.5">Так будет внизу отчёта</div>
-        <div className="rounded-lg border border-dashed border-[#c9d2df] px-4 py-3.5 text-[12px] leading-relaxed text-muted">
+        <div className="rounded-lg border border-dashed border-[#c9d1da] px-4 py-3.5 text-[12px] leading-relaxed text-muted">
           {foot.pay && <div className="mb-1 text-ink">{foot.pay}</div>}
           <div>{foot.line}</div>
         </div>

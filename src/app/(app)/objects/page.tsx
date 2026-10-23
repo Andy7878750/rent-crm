@@ -19,10 +19,13 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
   const { input, objects } = await loadMonthInput(user.accountId, month);
   const res = calculateMonth(input);
 
-  const bills = Object.values(res.tenants);
+  // Собственник считается как арендатор, но его сумма — не «к выставлению», а «остаётся на вас».
+  const ownerIds = new Set(objects.filter((o) => o.isOwner).map((o) => o.id));
+  const bills = Object.values(res.tenants).filter((b) => !ownerIds.has(b.objectId));
+  const selfTotal = Object.values(res.tenants).filter((b) => ownerIds.has(b.objectId)).reduce((a, b) => a + b.total, 0);
   const total = bills.reduce((a, b) => a + b.total, 0);
   const ready = bills.filter((b) => b.serviceCount && !b.missing.length).length;
-  const own = Object.values(res.owner).reduce((a, o) => a + o.total, 0);
+  const own = Object.values(res.owner).reduce((a, o) => a + o.total, 0) + selfTotal;
 
   return (
     <>
@@ -37,7 +40,7 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
         <Kpi label="К выставлению" value={`${fmtMoney(total)} ₽`} />
         <Kpi label="Арендаторы" value={String(bills.length)} note={`· готовы ${ready}`} />
         <Kpi label="Показания внесены" value={`${ready} из ${bills.length}`} />
-        <Kpi label="Остаётся на вас" value={`${fmtMoney(own)} ₽`} note="капремонт, незанятые доли" />
+        <Kpi label="Остаётся на вас" value={`${fmtMoney(own)} ₽`} note="свои объекты, капремонт, незанятые доли" />
       </div>
 
       {objects.length === 0 && (
@@ -61,7 +64,11 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
               </div>
               {o.address && <div className="px-[18px] text-[13px] text-muted">{o.address}</div>}
               {o.isOwner ? (
-                <div className="mt-3 border-t border-[#edf0f5] px-[18px] py-3 text-[13px] text-ink-2">Собственник — счета оплачиваете вы</div>
+                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#edf0f5] px-[18px] py-3 text-[12px] text-muted">
+                  <span>Пользуется<b className="block text-[14px] text-ink">собственник</b></span>
+                  <span>Показания<b className="block text-[14px] text-ink">{filled ? 'внесены' : 'нет'}</b></span>
+                  <span>За месяц<b className="block text-[14px] text-ink">{fmtMoney(sum)} ₽</b></span>
+                </div>
               ) : (
                 <>
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#edf0f5] px-[18px] py-3 text-[12px] text-muted">

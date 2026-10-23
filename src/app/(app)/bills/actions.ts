@@ -33,6 +33,7 @@ export async function issueInvoices(month: string, tenantIds: string[]) {
       const bill = res.tenants[tid];
       if (!bill || already.has(tid) || !bill.serviceCount || bill.missing.length) continue; // только готовые
       const obj = objects.find((o) => o.id === bill.objectId)!;
+      if (obj.isOwner) continue; // собственнику счёт не выставляется
       const ten = obj.tenants.find((t) => t.id === tid)!;
       const snap: InvoiceSnapshot = { tenantName: ten.name, objectName: obj.short, share: Number(ten.share), lines: bill.lines, meters: bill.meters };
       seq += 1;

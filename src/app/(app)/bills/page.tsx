@@ -17,7 +17,7 @@ export default async function ToIssuePage({ searchParams }: PageProps<'/bills'>)
   const res = calculateMonth(input);
   const issued = new Set(invoices.map((i) => i.tenantId));
 
-  const rows = objects.flatMap((o) => o.tenants.map((t) => ({ t, o, bill: res.tenants[t.id] })))
+  const rows = objects.filter((o) => !o.isOwner).flatMap((o) => o.tenants.map((t) => ({ t, o, bill: res.tenants[t.id] })))
     .filter((r) => r.bill && !issued.has(r.t.id));
   const ready = rows.filter((r) => r.bill.serviceCount && !r.bill.missing.length);
   const missing = rows.filter((r) => !r.bill.serviceCount || r.bill.missing.length);

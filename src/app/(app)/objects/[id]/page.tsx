@@ -30,6 +30,10 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
   const own = res.owner[obj.id];
   const statusOf = (tid: string) => {
     const b = res.tenants[tid];
+    if (obj.isOwner) {
+      if (!b || !b.serviceCount) return { text: 'Нет услуг', cls: 'bg-[#eef0f3] text-[#4d5f71]' };
+      return b.missing.length ? { text: 'Нет показаний', cls: 'bg-bad-soft text-bad' } : { text: 'Внесено', cls: 'bg-ok-soft text-ok' };
+    }
     if (issued.has(tid)) return { text: 'Счёт выставлен', cls: 'bg-ok-soft text-ok' };
     if (!b || !b.serviceCount) return { text: 'Нет услуг', cls: 'bg-[#eef0f3] text-[#4d5f71]' };
     return b.missing.length ? { text: 'Нет показаний', cls: 'bg-bad-soft text-bad' } : { text: 'Готов к счёту', cls: 'bg-[#e8edf2] text-[#2c3e50]' };
@@ -40,7 +44,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
   const meterFields: MeterField[] = [];
   if (tenant && bill) {
     for (const s of input.services) {
-      const tr = activeTariff(s, tenant.id, month);
+      const tr = activeTariff(s, tenant.id, month, obj.isOwner);
       if (!tr || s.kind === 'owner') continue;
       if (tr.logic === 'share' || tr.logic === 'split' || tr.logic === 'meterRest') {
         billFields.push({ serviceId: s.id, supplier: s.supplier, name: s.name, value: input.bills[obj.id]?.[s.id] });
@@ -76,10 +80,19 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-        <Kpi label="К выставлению" value={`${fmtMoney(total)} ₽`} />
-        <Kpi label="Арендаторы" value={String(obj.tenants.length)} note={`· готовы ${filled}`} />
-        <Kpi label="Квитанции и показания" value={`${filled} из ${obj.tenants.length}`} />
-        <Kpi label="Остаётся на вас" value={`${fmtMoney(own?.total ?? 0)} ₽`} note={own?.lines.map((l) => l.label).join(', ') || 'нет расходов'} small />
+        {obj.isOwner ? (
+          <>
+            <Kpi label="За месяц — на вас" value={`${fmtMoney(total + (own?.total ?? 0))} ₽`} />
+            <Kpi label="Квитанции и показания" value={filled ? 'внесены' : 'не внесены'} />
+          </>
+        ) : (
+          <>
+            <Kpi label="К выставлению" value={`${fmtMoney(total)} ₽`} />
+            <Kpi label="Арендаторы" value={String(obj.tenants.length)} note={`· готовы ${filled}`} />
+            <Kpi label="Квитанции и показания" value={`${filled} из ${obj.tenants.length}`} />
+            <Kpi label="Остаётся на вас" value={`${fmtMoney(own?.total ?? 0)} ₽`} note={own?.lines.map((l) => l.label).join(', ') || 'нет расходов'} small />
+          </>
+        )}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
@@ -90,24 +103,22 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
             <span><b className="block text-[17px] font-semibold">{obj.short}</b><span className="hint">{obj.address || 'Адрес не указан'}</span></span>
           </div>
           <div className="border-t border-[#edf0f5] p-[18px]">
-            {obj.isOwner ? (
-              <><div className="eyebrow">Собственник</div><p className="mt-1.5 text-ink-2">Арендаторов нет, счета оплачиваете вы.</p></>
-            ) : (
+            {(
               <>
-                <div className="eyebrow mb-2">Арендаторы · {obj.tenants.length}</div>
+                <div className="eyebrow mb-2">{obj.isOwner ? 'Пользуется собственник' : `Арендаторы · ${obj.tenants.length}`}</div>
                 <div className="flex flex-col gap-2">
                   {obj.tenants.map((t) => {
                     const st = statusOf(t.id); const on = tenant?.id === t.id;
                     return (
                       <Link key={t.id} href={`/objects/${obj.id}?m=${month}&t=${t.id}`} aria-current={on ? 'true' : undefined}
                         className={`rounded-[10px] border px-3.5 py-3 ${on ? 'border-2 border-accent bg-[#f2f5f8]' : 'border-line hover:border-line-strong'}`}>
-                        <span className="flex items-baseline justify-between gap-2"><b className="truncate text-[15px] font-semibold">{t.name}</b><span className="hint">доля {pctTxt(Number(t.share))}</span></span>
+                        <span className="flex items-baseline justify-between gap-2"><b className="truncate text-[15px] font-semibold">{t.name}</b>{!obj.isOwner && <span className="hint">доля {pctTxt(Number(t.share))}</span>}</span>
                         <span className="mt-1.5 flex items-center justify-between gap-2"><span className="hint">{t.phone}</span><span className={`pill ${st.cls}`}>{st.text}</span></span>
                       </Link>
                     );
                   })}
                 </div>
-                <Link href={`/objects/${obj.id}/edit`} className="mt-2.5 block rounded-lg border border-dashed border-[#bcc5cf] px-2.5 py-2 font-semibold text-accent">+ Добавить арендатора</Link>
+                {!obj.isOwner && <Link href={`/objects/${obj.id}/edit`} className="mt-2.5 block rounded-lg border border-dashed border-[#bcc5cf] px-2.5 py-2 font-semibold text-accent">+ Добавить арендатора</Link>}
               </>
             )}
           </div>
@@ -119,7 +130,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
             objectName={obj.short} bills={billFields} meters={meterFields} missing={bill.missing.length} serviceCount={bill.serviceCount}
             nextHref={next ? `/objects/${obj.id}?m=${month}&t=${next.id}` : null} nextName={next?.name ?? ''} />
         ) : (
-          <section className="card p-[18px] text-ink-2">{obj.isOwner ? 'Суммы счетов объекта собственника вносятся в «Оплатах поставщикам».' : 'Добавьте арендатора, чтобы вносить показания.'}</section>
+          <section className="card p-[18px] text-ink-2">Добавьте арендатора, чтобы вносить показания.</section>
         )}
 
         {/* 3. Расчёт */}
@@ -150,7 +161,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
             </div>
             <div className="mt-auto flex flex-wrap gap-2 border-t border-line px-[18px] py-3.5">
               <Link href={`/report/${tenant.id}?m=${month}`} target="_blank" className="btn btn-primary"><FileText size={16} /> Отчёт PDF</Link>
-              {issued.has(tenant.id) ? <Link href="/bills/issued" className="btn">Счёт выставлен →</Link> : <Link href={`/bills?m=${month}`} className="btn">К выставлению →</Link>}
+              {obj.isOwner ? null : issued.has(tenant.id) ? <Link href="/bills/issued" className="btn">Счёт выставлен →</Link> : <Link href={`/bills?m=${month}`} className="btn">К выставлению →</Link>}
             </div>
           </section>
         ) : <div />}

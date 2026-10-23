@@ -9,10 +9,14 @@ import type {
 import { fmtMoney, fmtPrice, fmtQty, round2, sumMoney } from './format.ts';
 
 /** Тариф услуги, действующий для арендатора в расчётном месяце (самый поздний по дате начала). */
-export function activeTariff(service: Service, tenantId: string, month: string): Tariff | null {
+/**
+ * Действующий тариф услуги для арендатора на месяц.
+ * owner = true — это собственник своего объекта: «Все арендаторы» на него не распространяется, только явный выбор.
+ */
+export function activeTariff(service: Service, tenantId: string, month: string, owner = false): Tariff | null {
   let best: Tariff | null = null;
   for (const t of service.tariffs) {
-    const forTenant = t.who === 'all' || t.who.includes(tenantId);
+    const forTenant = (t.who === 'all' && !owner) || (t.who !== 'all' && t.who.includes(tenantId));
     if (!forTenant || t.from.slice(0, 7) > month) continue;
     if (!best || t.from > best.from) best = t;
   }
@@ -50,7 +54,7 @@ function tenantUsage(ctx: Ctx, tenantId: string, service: Service, tariff: Tarif
 function mates(ctx: Ctx, service: Service, logic: Tariff['logic']): Array<[Tenant, Tariff]> {
   const out: Array<[Tenant, Tariff]> = [];
   for (const t of ctx.obj.tenants) {
-    const tr = activeTariff(service, t.id, ctx.input.month);
+    const tr = activeTariff(service, t.id, ctx.input.month, !!ctx.obj.owner);
     if (tr && tr.logic === logic) out.push([t, tr]);
   }
   return out;
@@ -74,7 +78,7 @@ function calcTenant(ctx: Ctx, tenant: Tenant): TenantBill {
   const pairs: Array<[Service, Tariff]> = [];
   for (const s of input.services) {
     if (s.kind === 'owner') continue;
-    const tr = activeTariff(s, tenant.id, input.month);
+    const tr = activeTariff(s, tenant.id, input.month, !!obj.owner);
     if (tr) pairs.push([s, tr]);
   }
 
@@ -215,7 +219,7 @@ export function calculateMonth(input: MonthInput): MonthResult {
   const result: MonthResult = { tenants: {}, owner: {} };
   for (const obj of input.objects) {
     const ctx: Ctx = { input, obj };
-    if (!obj.owner) for (const t of obj.tenants) result.tenants[t.id] = calcTenant(ctx, t);
+    for (const t of obj.tenants) result.tenants[t.id] = calcTenant(ctx, t);
     result.owner[obj.id] = calcOwner(ctx);
   }
   return result;

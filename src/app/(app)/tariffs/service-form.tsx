@@ -126,7 +126,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
                   <label className="mb-2 flex cursor-pointer items-center gap-2">
                     <input type="checkbox" checked={t.whoAll} disabled={allTakenBy !== null || takenBy.size > 0}
                       onChange={() => setT(i, { whoAll: !t.whoAll, who: [] })} />
-                    <b className="font-semibold">Все арендаторы</b> <span className="hint">— и те, кого добавите позже</span>
+                    <b className="font-semibold">Все арендаторы</b> <span className="hint">— и те, кого добавите позже (свои объекты-собственники — только если отметить их отдельно)</span>
                   </label>
                   {!t.whoAll && (
                     <div className="flex flex-col gap-2.5 rounded-lg border border-line p-3">

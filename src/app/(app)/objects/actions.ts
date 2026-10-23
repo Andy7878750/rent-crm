@@ -8,6 +8,8 @@ import { requireUser } from '@/lib/auth/session';
 import { readObjectTypes, writeObjectTypes } from '@/lib/data';
 import { isMonth } from '@/lib/month';
 
+const OWNER_NAME = 'Собственник';
+
 export type ObjectFormState = { errors?: Record<string, string> };
 
 type TenantIn = { id?: string; name: string; share: string; phone: string; email: string; contract: string; contractEnd: string };
@@ -62,12 +64,21 @@ export async function saveObject(objectId: string | null, _prev: ObjectFormState
 
   const id = await db.transaction(async (tx) => {
     let oid = objectId;
+    const wasOwner = oid ? (await tx.select({ o: schema.objects.isOwner }).from(schema.objects).where(eq(schema.objects.id, oid)).limit(1))[0]?.o === true : false;
     if (oid) await tx.update(schema.objects).set(values).where(eq(schema.objects.id, oid));
     else oid = (await tx.insert(schema.objects).values({ ...values, accountId: user.accountId }).returning({ id: schema.objects.id }))[0].id;
 
     const existing = await tx.select({ id: schema.tenants.id }).from(schema.tenants)
       .where(and(eq(schema.tenants.objectId, oid), isNull(schema.tenants.archivedAt)));
-    const keep = isOwner ? [] : tenantsIn;
+    // Собственник работает как арендатор с долей 100%: те же услуги, ввод данных, расчёт и отчёт.
+    if (isOwner) {
+      const self = wasOwner ? existing[0] : undefined;
+      const others = existing.filter((e) => e.id !== self?.id).map((e) => e.id);
+      if (others.length) await tx.update(schema.tenants).set({ archivedAt: new Date() }).where(inArray(schema.tenants.id, others));
+      if (!self) await tx.insert(schema.tenants).values({ objectId: oid, name: OWNER_NAME, share: '100', sort: 0 });
+      return oid;
+    }
+    const keep = tenantsIn;
     const keptIds = new Set(keep.map((t) => t.id).filter(Boolean) as string[]);
     // Удалённые арендаторы уходят в архив: история и выставленные счета сохраняются.
     const gone = existing.map((e) => e.id).filter((x) => !keptIds.has(x));

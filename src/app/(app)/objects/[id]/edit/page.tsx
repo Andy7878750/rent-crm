@@ -25,7 +25,7 @@ export default async function EditObjectPage({ params }: PageProps<'/objects/[id
       <ObjectForm customTypes={customTypes} objectId={o.id} cancelHref={`/objects/${o.id}`} initial={{
         type: o.type, typeLabel: o.typeLabel, short: o.short, address: o.address, floor: o.floor, ukName: o.ukName, ukPhone: o.ukPhone,
         cabinetUrl: o.cabinetUrl, cabinetLogin: o.cabinetLogin, cabinetHint: o.cabinetHint, isOwner: o.isOwner,
-        tenants: o.tenants.map((t) => ({ id: t.id, name: t.name, share: String(Number(t.share)).replace('.', ','), phone: t.phone, email: t.email, contract: t.contract, contractEnd: t.contractEnd ?? '' })),
+        tenants: o.isOwner ? [] : o.tenants.map((t) => ({ id: t.id, name: t.name, share: String(Number(t.share)).replace('.', ','), phone: t.phone, email: t.email, contract: t.contract, contractEnd: t.contractEnd ?? '' })),
       }} />
     </>
   );

@@ -8,7 +8,7 @@ tar -xzf "$ARCHIVE" -C "$REL"
 chown -R app:app "$REL"
 # Настройки почты из выкладки: старые строки APP_URL/SMTP_*/MAIL_FROM заменяем новыми.
 if [ -f /root/mail.env ]; then
-  grep -vE '^(APP_URL|SMTP_[A-Z]+|MAIL_FROM)=' /etc/rent-crm.env > /etc/rent-crm.env.new || true
+  grep -vE '^(APP_URL|SMTP_[A-Z]+|MAIL_FROM|REGISTER_ALLOW|REGISTRATION_OPEN)=' /etc/rent-crm.env > /etc/rent-crm.env.new || true
   cat /root/mail.env >> /etc/rent-crm.env.new
   chmod 640 /etc/rent-crm.env.new && chown root:app /etc/rent-crm.env.new
   mv /etc/rent-crm.env.new /etc/rent-crm.env
@@ -28,4 +28,6 @@ systemctl is-active --quiet rent-crm || { journalctl -u rent-crm -n 50 --no-page
 ls -1dt /opt/rent-crm/releases/* | tail -n +6 | xargs -r rm -rf
 rm -f "$ARCHIVE"
 [ -n "${SMTP_PASS:-}" ] && (cd "$REL" && sudo -u app --preserve-env=SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASS node scripts/mail-check.mjs) || true
+# Сколько аккаунтов в базе (без адресов — только число).
+echo "mail: аккаунтов в базе: $(sudo -u postgres psql -tA rentcrm -c 'select count(*) from users' 2>/dev/null || echo '?')"
 echo "released $REL"

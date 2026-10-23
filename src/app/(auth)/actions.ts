@@ -15,6 +15,15 @@ export type FormState = {
   values?: Record<string, string>;
 };
 
+/**
+ * Регистрация: открыта в разработке или при REGISTRATION_OPEN=1.
+ * Иначе — только для адресов из REGISTER_ALLOW (через запятую).
+ */
+function registrationAllowed(email: string) {
+  if (process.env.NODE_ENV !== 'production' || process.env.REGISTRATION_OPEN === '1') return true;
+  return (process.env.REGISTER_ALLOW ?? '').toLowerCase().split(',').map((x) => x.trim()).includes(email);
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
 
@@ -45,6 +54,9 @@ export async function register(_prev: FormState, fd: FormData): Promise<FormStat
   if (fd.get('consent') !== 'on') errors.consent = 'Нужно согласие на обработку персональных данных';
   if (Object.keys(errors).length) return { errors, values: { name, email } };
 
+  if (!registrationAllowed(email)) {
+    return { errors: { form: 'Сейчас Расчётка в закрытом тестировании — регистрация только по приглашению.' }, values: { name, email } };
+  }
   const [exists] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email)).limit(1);
   if (exists) return { errors: { email: 'Эта почта уже зарегистрирована. Войдите или восстановите пароль.' }, values: { name, email } };
 

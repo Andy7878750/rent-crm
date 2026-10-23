@@ -42,6 +42,7 @@ export default function RegisterPage() {
       <h1 className="text-[22px] font-bold">Регистрация</h1>
       <p className="mb-6 mt-1.5 text-muted">Займёт минуту. Сразу после входа вас ждёт пример объекта.</p>
       <form action={action} onSubmit={check} noValidate className="flex flex-col gap-3.5">
+        {e.form && <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-[13px] text-bad">{e.form}</p>}
         <Field label="Как к вам обращаться" name="name" autoComplete="name" placeholder="Имя и фамилия" defaultValue={state.values?.name} error={e.name} onInput={() => clear('name')} />
         <Field label="Почта" name="email" type="email" autoComplete="email" placeholder="name@mail.ru" defaultValue={state.values?.email} error={e.email} onInput={() => clear('email')} />
         <div className="flex flex-col gap-1.5">

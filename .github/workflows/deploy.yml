@@ -79,6 +79,8 @@ jobs:
           umask 077
           {
             echo "APP_URL=$APP_URL"
+            # Регистрация закрыта (закрытое тестирование): только эти адреса. Открыть всем — REGISTRATION_OPEN=1.
+            echo "REGISTER_ALLOW=rentflow@yandex.com"
             if [ -n "$SMTP_PASS" ]; then
               printf 'SMTP_HOST=%s\nSMTP_PORT=465\nSMTP_USER=%s\nSMTP_PASS="%s"\nMAIL_FROM="Расчётка <%s>"\n' "$SMTP_HOST" "$SMTP_USER" "$SMTP_PASS" "$SMTP_USER"
             fi

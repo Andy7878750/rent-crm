@@ -51,30 +51,31 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
         {objects.map((o) => {
           const Icon = ICON[o.type];
           const sum = o.tenants.reduce((a, t) => a + (res.tenants[t.id]?.total ?? 0), 0);
-          const filled = o.tenants.filter((t) => res.tenants[t.id] && !res.tenants[t.id].missing.length).length;
+          const filled = o.tenants.filter((t) => res.tenants[t.id]?.serviceCount && !res.tenants[t.id].missing.length).length;
           return (
-            <Link key={o.id} href={`/objects/${o.id}?m=${month}`} className="card flex flex-col shadow-card transition hover:border-accent">
-              <div className="flex items-start gap-3 p-[18px] pb-3">
-                <span className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-accent-soft text-accent"><Icon size={20} /></span>
-                <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2 text-[17px] font-semibold">{o.short}
-                    {o.isExample && <span className="pill bg-accent-soft text-accent">Пример</span>}</span>
-                  <span className="block text-[12px] text-muted">{o.type === 'other' && o.typeLabel ? o.typeLabel : TYPE[o.type]}</span>
+            <Link key={o.id} href={`/objects/${o.id}?m=${month}`} className="card flex flex-col overflow-hidden shadow-card transition hover:border-cta">
+              {/* Серая шапка, как у разделов формы: иконка, название, тип. */}
+              <div className="flex items-center gap-3 border-b border-line bg-[#f6f8fb] px-[18px] py-3">
+                <span className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-cta-soft text-cta-ink"><Icon size={19} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[16px] font-semibold">{o.short}</span>
+                  <span className="block truncate text-[12px] text-muted">{o.type === 'other' && o.typeLabel ? o.typeLabel : TYPE[o.type]}</span>
                 </span>
+                {o.isExample && <span className="pill flex-none border border-cta/40 bg-white text-cta-ink">Пример</span>}
               </div>
-              {o.address && <div className="px-[18px] text-[13px] text-muted">{o.address}</div>}
+              <div className="px-[18px] pt-3 text-[13px] text-muted">{o.address || 'Адрес не указан'}</div>
               {o.isOwner ? (
                 <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#edf0f5] px-[18px] py-3 text-[12px] text-muted">
                   <span>Пользуется<b className="block text-[14px] text-ink">собственник</b></span>
-                  <span>Показания<b className="block text-[14px] text-ink">{filled ? 'внесены' : 'нет'}</b></span>
-                  <span>За месяц<b className="block text-[14px] text-ink">{fmtMoney(sum)} ₽</b></span>
+                  <span>Показания<b className="block text-[14px] text-ink">{!o.tenants.some((t) => res.tenants[t.id]?.serviceCount) ? 'нет услуг' : filled ? 'внесены' : 'не внесены'}</b></span>
+                  <span>За месяц<b className="block text-[14px] text-cta-ink">{fmtMoney(sum)} ₽</b></span>
                 </div>
               ) : (
                 <>
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#edf0f5] px-[18px] py-3 text-[12px] text-muted">
                     <span>Арендаторы<b className="block text-[14px] text-ink">{o.tenants.length}</b></span>
                     <span>Показания<b className="block text-[14px] text-ink">{filled} из {o.tenants.length}</b></span>
-                    <span>К выставлению<b className="block text-[14px] text-ink">{fmtMoney(sum)} ₽</b></span>
+                    <span>К выставлению<b className="block text-[14px] text-cta-ink">{fmtMoney(sum)} ₽</b></span>
                   </div>
                   <div className="flex flex-col gap-1 border-t border-[#edf0f5] px-[18px] py-3">
                     {o.tenants.length === 0 && <span className="hint">Арендаторов пока нет</span>}

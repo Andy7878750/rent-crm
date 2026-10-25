@@ -26,7 +26,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
   const tenant = obj.tenants.find((t) => t.id === sp.t) ?? obj.tenants[0];
   const bill = tenant ? res.tenants[tenant.id] : null;
   const total = obj.tenants.reduce((a, t) => a + (res.tenants[t.id]?.total ?? 0), 0);
-  const filled = obj.tenants.filter((t) => res.tenants[t.id] && !res.tenants[t.id].missing.length).length;
+  const filled = obj.tenants.filter((t) => res.tenants[t.id]?.serviceCount && !res.tenants[t.id].missing.length).length;
   const own = res.owner[obj.id];
   const statusOf = (tid: string) => {
     const b = res.tenants[tid];
@@ -83,7 +83,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
         {obj.isOwner ? (
           <>
             <Kpi label="За месяц — на вас" value={`${fmtMoney(total + (own?.total ?? 0))} ₽`} />
-            <Kpi label="Квитанции и показания" value={filled ? 'внесены' : 'не внесены'} />
+            <Kpi label="Квитанции и показания" value={!bill?.serviceCount ? 'нет услуг' : filled ? 'внесены' : 'не внесены'} />
           </>
         ) : (
           <>

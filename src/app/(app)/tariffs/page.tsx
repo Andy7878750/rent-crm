@@ -23,8 +23,8 @@ function priceText(t: Tariff, unit: string): [string, string] {
     case 'whole': return ['вся сумма', 'квитанции'];
     case 'fixed': return [num(t.price), '₽ в месяц'];
     case 'dn': return [`${num(t.price)} / ${num(t.price2)}`, `₽/${unit} день / ночь`];
-    case 'norm': return [num(t.price), `₽ × норматив ${num(t.norm)}`];
-    case 'meterRest': return [num(t.price), `₽/${unit}${t.norm !== undefined ? ` + ${t.extraName || 'норматив'}` : ''} + остаток`];
+    case 'norm': return [num(t.price), `₽ × ${num(t.norm)}`];
+    case 'meterRest': return [num(t.price), `₽/${unit} + остаток`];
     default: return [num(t.price), `₽/${unit}`];
   }
 }
@@ -44,8 +44,9 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
     t.who.forEach((id) => { const x = tenantObj.get(id); if (x) byObj.set(x.obj, [...(byObj.get(x.obj) ?? []), x.name]); });
     return [...byObj.entries()].map(([o, ns]) => `${o}: ${ns.join(', ')}`).join(' · ') || 'никто не выбран';
   };
-  const visible = services.filter((s) => filter === 'all' || s.kind === 'owner' ||
-    s.tariffs.some((t) => t.who === 'all' || t.who.some((id) => tenantObj.get(id)?.objId === filter)));
+  const ownerFilter = objects.find((o) => o.id === filter)?.isOwner ?? false;
+  const visible = services.filter((s) => filter === 'all' || (s.kind === 'owner' && !ownerFilter) ||
+    s.tariffs.some((t) => (t.who === 'all' && !ownerFilter) || (t.who !== 'all' && t.who.some((id) => tenantObj.get(id)?.objId === filter))));
 
   const chip = (id: string, label: string) => (
     <Link key={id} href={id === 'all' ? '/tariffs' : `/tariffs?o=${id}`} aria-pressed={filter === id}
@@ -61,56 +62,86 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
       </div>
       <p className="max-w-[900px] text-[13px] text-muted">
         Услуга — одна строка квитанции поставщика (например, «Водоканал — холодная вода»). Внутри услуги — тарифы: логика расчёта, цена и арендаторы,
-        для которых она действует. Нажмите на карточку, чтобы изменить услугу. Стрелки задают порядок строк в «Вводе данных», «Расчёте» и отчёте.
+        для которых она действует. Нажмите на название или ✎, чтобы изменить услугу. Стрелки в столбце «№» задают порядок строк в «Вводе данных», «Расчёте» и отчёте.
       </p>
       <div role="group" aria-label="Фильтр по объекту" className="flex flex-wrap gap-2">
         {chip('all', 'Все объекты')}
-        {objects.filter((o) => !o.isOwner).map((o) => chip(o.id, o.short))}
+        {objects.map((o) => chip(o.id, o.short))}
       </div>
 
       {visible.length === 0 && (
         <div className="card p-6 text-ink-2">Услуг пока нет. <Link href="/tariffs/new" className="font-semibold text-accent">Создайте первую</Link> — например, «Водоканал — холодная вода».</div>
       )}
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,380px),1fr))] items-stretch gap-4">
-        {visible.map((s, idx) => {
-          const K = KINDS[s.kind];
-          return (
-            <div key={s.id} id={`s-${s.id}`} className="card flex min-w-0 flex-col shadow-card">
-              <Link href={`/tariffs/${s.id}`} className="flex flex-1 flex-col rounded-t-xl hover:bg-[#fbfcfe]" aria-label={`Изменить услугу ${s.supplier} — ${s.name}`}>
-                <span className="flex items-start justify-between gap-2.5 px-[18px] pb-2.5 pt-4">
-                  <span className="min-w-0"><span className="block text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">{s.supplier}</span>
-                    <span className="mt-0.5 block text-[16px] font-bold">{s.name}</span></span>
-                  <span className="flex items-center gap-2"><span className={`pill ${K.pill}`}>{K.label}</span>
-                    <span aria-hidden className="flex size-[30px] items-center justify-center rounded-lg border border-line text-ink-2"><Pencil size={15} /></span></span>
-                </span>
-                <span className="block border-t border-[#edf0f5]">
-                  {s.tariffs.length === 0 && <span className="block px-[18px] py-2.5 hint">Тарифов нет</span>}
-                  {[...s.tariffs].sort((a, b) => b.from.localeCompare(a.from)).map((t, i) => {
-                    const [p, u] = priceText(t, s.unit); const who = whoText(t);
+      {visible.length > 0 && (
+        <div className="card overflow-x-auto shadow-card">
+          <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-line bg-[#f6f8fb] text-[12px] text-muted">
+                <th className="w-[70px] px-3 py-2.5 font-semibold">№</th>
+                <th className="px-3 py-2.5 font-semibold">Поставщик</th>
+                <th className="px-3 py-2.5 font-semibold">Услуга</th>
+                <th className="px-3 py-2.5 font-semibold">Счёт</th>
+                <th className="px-3 py-2.5 font-semibold">Логика расчёта</th>
+                <th className="px-3 py-2.5 text-right font-semibold">Цена</th>
+                <th className="px-3 py-2.5 font-semibold">Для кого</th>
+                <th className="px-3 py-2.5 font-semibold">С даты</th>
+                <th className="w-[44px] px-2 py-2.5"><span className="sr-only">Изменить</span></th>
+              </tr>
+            </thead>
+            {visible.map((s, idx) => {
+              const K = KINDS[s.kind];
+              const ts = [...s.tariffs].sort((a, b) => b.from.localeCompare(a.from));
+              const rows = ts.length ? ts : [null];
+              const span = rows.length;
+              return (
+                <tbody key={s.id} id={`s-${s.id}`} className="group border-b border-[#edf0f5] last:border-b-0 hover:bg-[#fafbfc]">
+                  {rows.map((t, i) => {
+                    const [p, u] = t ? priceText(t, s.unit) : ['—', ''];
+                    const who = t ? whoText(t) : null;
+                    const sub = i > 0 ? 'border-t border-dashed border-[#e6eaee]' : '';
                     return (
-                      <span key={i} className="flex flex-col gap-1 border-b border-[#f0f2f6] px-[18px] py-2.5">
-                        <span className="flex items-center gap-2.5"><span className="flex-1 font-semibold">{p} <span className="text-[12px] font-normal text-muted">{u}</span></span>
-                          <span className="text-[12px] text-muted">с {date(t.from)}</span></span>
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="pill bg-[#eef0f3] text-[#4d5f71]">{LOGICS[t.logic].label}</span>
-                          <span className="text-[11px] text-muted">{(t.logic === 'derived' || t.logic === 'norm') && t.sources?.length
-                            ? `(${t.sources.map((x) => svcName.get(x) ?? '?').join(' + ')})${t.logic === 'norm' ? ' × норматив' : ''} × цена` : LOGICS[t.logic].formula}</span>
-                        </span>
-                        {s.kind === 'owner' ? <span className="pill self-start bg-[#eef0f3] text-[#4d5f71]">Платит арендодатель</span>
-                          : who === null ? <span className="pill self-start bg-ok-soft text-ok">Все арендаторы</span>
-                          : <span className="text-[13px] leading-snug text-ink-2">{who}</span>}
-                      </span>
+                      <tr key={i} className="align-top">
+                        {i === 0 && (
+                          <>
+                            <td rowSpan={span} className="px-3 py-2.5">
+                              <span className="flex items-center gap-1"><b className="w-5 text-ink-2">{idx + 1}</b>
+                                <MoveButtons compact pos={idx + 1} up={visible[idx - 1]?.id} down={visible[idx + 1]?.id} id={s.id} name={s.name} /></span>
+                            </td>
+                            <td rowSpan={span} className="px-3 py-2.5 text-ink-2">{s.supplier}</td>
+                            <td rowSpan={span} className="px-3 py-2.5">
+                              <Link href={`/tariffs/${s.id}`} className="font-semibold text-ink hover:text-cta-ink hover:underline">{s.name}</Link>
+                            </td>
+                            <td rowSpan={span} className="whitespace-nowrap px-3 py-2.5"><span className={`pill ${K.pill}`}>{K.label}</span></td>
+                          </>
+                        )}
+                        <td className={`px-3 py-2.5 ${sub}`}>
+                          {t ? <span title={(t.logic === 'derived' || t.logic === 'norm') && t.sources?.length
+                              ? `(${t.sources.map((x) => svcName.get(x) ?? '?').join(' + ')})${t.logic === 'norm' ? ' × норматив' : ''} × цена` : LOGICS[t.logic].formula}>{LOGICS[t.logic].label}</span>
+                            : <span className="text-muted">тарифов нет</span>}
+                        </td>
+                        <td className={`whitespace-nowrap px-3 py-2.5 text-right ${sub}`}><b className="font-semibold">{p}</b> <span className="text-[11px] text-muted">{u}</span></td>
+                        <td className={`px-3 py-2.5 ${sub}`}>
+                          {!t ? '—' : s.kind === 'owner' ? <span className="text-muted">платит арендодатель</span>
+                            : who === null ? <span className="pill bg-ok-soft text-ok">Все арендаторы</span>
+                            : <span className="leading-snug text-ink-2">{who}</span>}
+                        </td>
+                        <td className={`whitespace-nowrap px-3 py-2.5 text-muted ${sub}`}>{t ? date(t.from) : '—'}</td>
+                        {i === 0 && (
+                          <td rowSpan={span} className="px-2 py-2">
+                            <Link href={`/tariffs/${s.id}`} aria-label={`Изменить услугу ${s.supplier} — ${s.name}`} title="Изменить"
+                              className="flex size-8 items-center justify-center rounded-lg border border-line bg-white text-ink-2 hover:border-cta hover:text-cta-ink"><Pencil size={15} /></Link>
+                          </td>
+                        )}
+                      </tr>
                     );
                   })}
-                </span>
-                {s.kind === 'owner' && <span className="block px-[18px] py-2.5 hint">Арендаторы эту услугу не видят, она входит в «Остаётся на вас».</span>}
-              </Link>
-              <MoveButtons pos={idx + 1} up={visible[idx - 1]?.id} down={visible[idx + 1]?.id} id={s.id} name={s.name} />
-            </div>
-          );
-        })}
-      </div>
+                </tbody>
+              );
+            })}
+          </table>
+        </div>
+      )}
     </>
   );
 }

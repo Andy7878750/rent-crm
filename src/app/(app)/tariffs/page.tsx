@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Pencil, Plus } from 'lucide-react';
 import { requireUser } from '@/lib/auth/session';
 import { listObjects, loadServices } from '@/lib/data';
-import { KINDS, LOGICS } from '@/lib/calc/logics';
+import { LOGICS } from '@/lib/calc/logics';
 import type { Tariff } from '@/lib/calc/types';
 import { MoveButtons } from './move-buttons';
 
@@ -16,12 +16,19 @@ const num = (n?: number) => {
 };
 const date = (d: string) => d.split('-').reverse().join('.');
 
+/** Тип счёта в таблице: цветная точка и короткое слово вместо плашки. */
+const KIND_SHORT = {
+  common: { label: 'Общий', dot: '#2f7a55' },
+  indiv: { label: 'Индивидуальный', dot: '#34495e' },
+  owner: { label: 'Арендодатель', dot: '#c8663b' },
+} as const;
+
 function priceText(t: Tariff, unit: string): [string, string] {
   switch (t.logic) {
-    case 'share': return ['доля', 'от квитанции'];
-    case 'split': return ['по счёту', 'цена месяца'];
-    case 'whole': return ['вся сумма', 'квитанции'];
-    case 'fixed': return [num(t.price), '₽ в месяц'];
+    case 'share': return ['доля', ''];
+    case 'split': return ['по счёту', ''];
+    case 'whole': return ['вся сумма', ''];
+    case 'fixed': return [num(t.price), '₽/мес'];
     case 'dn': return [`${num(t.price)} / ${num(t.price2)}`, `₽/${unit} день / ночь`];
     case 'norm': return [num(t.price), `₽ × ${num(t.norm)}`];
     case 'meterRest': return [num(t.price), `₽/${unit} + остаток`];
@@ -74,63 +81,67 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
       )}
 
       {visible.length > 0 && (
-        <div className="card overflow-x-auto shadow-card">
-          <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
+        /* Таблица: текст влево, цены и даты вправо моноширинным; зебра; шапка и «Услуга» закреплены при прокрутке. */
+        <div className="card max-h-[calc(100vh-230px)] overflow-auto shadow-card">
+          <table className="w-full min-w-[900px] border-separate border-spacing-0 text-left text-[13px]">
             <thead>
-              <tr className="border-b border-line bg-[#f6f8fb] text-[12px] text-muted">
-                <th className="w-[70px] px-3 py-2.5 font-semibold">№</th>
-                <th className="px-3 py-2.5 font-semibold">Поставщик</th>
-                <th className="px-3 py-2.5 font-semibold">Услуга</th>
-                <th className="px-3 py-2.5 font-semibold">Счёт</th>
-                <th className="px-3 py-2.5 font-semibold">Логика расчёта</th>
-                <th className="px-3 py-2.5 text-right font-semibold">Цена</th>
-                <th className="px-3 py-2.5 font-semibold">Для кого</th>
-                <th className="px-3 py-2.5 font-semibold">С даты</th>
-                <th className="w-[44px] px-2 py-2.5"><span className="sr-only">Изменить</span></th>
+              <tr className="text-[12px] text-muted">
+                {[['№', 'w-[78px]'], ['Услуга', 'sticky left-0 z-20 min-w-[200px]'], ['Счёт', ''], ['Логика расчёта', ''], ['Для кого', ''], ['Цена', 'text-right pr-1'], ['', 'pl-0 w-[110px]'], ['С даты', 'text-right'], ['', 'w-[52px]']].map(([h, c], k) => (
+                  <th key={k} className={`sticky top-0 z-10 border-b border-line bg-[#f6f8fb] px-3 py-2.5 font-semibold ${c}`}>{h}</th>
+                ))}
               </tr>
             </thead>
             {visible.map((s, idx) => {
-              const K = KINDS[s.kind];
+              const K = KIND_SHORT[s.kind];
               const ts = [...s.tariffs].sort((a, b) => b.from.localeCompare(a.from));
               const rows = ts.length ? ts : [null];
               const span = rows.length;
+              const bg = idx % 2 ? 'bg-[#f4f6f8]' : 'bg-white';
+              const cell = `border-b border-[#edf0f5] px-3 py-2.5 align-top ${bg}`;
               return (
-                <tbody key={s.id} id={`s-${s.id}`} className="group border-b border-[#edf0f5] last:border-b-0 hover:bg-[#fafbfc]">
+                <tbody key={s.id} id={`s-${s.id}`} className="group">
                   {rows.map((t, i) => {
                     const [p, u] = t ? priceText(t, s.unit) : ['—', ''];
                     const who = t ? whoText(t) : null;
-                    const sub = i > 0 ? 'border-t border-dashed border-[#e6eaee]' : '';
+                    const last = i === rows.length - 1;
+                    const tc = `${cell} ${last ? '' : 'border-b-[#f0f2f5] border-dashed'}`;
                     return (
-                      <tr key={i} className="align-top">
+                      <tr key={i}>
                         {i === 0 && (
                           <>
-                            <td rowSpan={span} className="px-3 py-2.5">
-                              <span className="flex items-center gap-1"><b className="w-5 text-ink-2">{idx + 1}</b>
-                                <MoveButtons compact pos={idx + 1} up={visible[idx - 1]?.id} down={visible[idx + 1]?.id} id={s.id} name={s.name} /></span>
+                            <td rowSpan={span} className={cell}>
+                              <span className="flex items-center gap-1">
+                                <span className="w-5 tabular-nums text-ink-2">{idx + 1}</span>
+                                <span className="opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                                  <MoveButtons compact pos={idx + 1} up={visible[idx - 1]?.id} down={visible[idx + 1]?.id} id={s.id} name={s.name} />
+                                </span>
+                              </span>
                             </td>
-                            <td rowSpan={span} className="px-3 py-2.5 text-ink-2">{s.supplier}</td>
-                            <td rowSpan={span} className="px-3 py-2.5">
+                            <td rowSpan={span} className={`${cell} sticky left-0 z-[1]`}>
                               <Link href={`/tariffs/${s.id}`} className="font-semibold text-ink hover:text-cta-ink hover:underline">{s.name}</Link>
+                              <span className="block text-[12px] text-faint">{s.supplier}</span>
                             </td>
-                            <td rowSpan={span} className="whitespace-nowrap px-3 py-2.5"><span className={`pill ${K.pill}`}>{K.label}</span></td>
+                            <td rowSpan={span} className={`${cell} whitespace-nowrap`}>
+                              <span className="mr-2 inline-block size-[7px] rounded-full align-[1px]" style={{ background: K.dot }} aria-hidden />{K.label}
+                            </td>
                           </>
                         )}
-                        <td className={`px-3 py-2.5 ${sub}`}>
+                        <td className={`${tc} text-ink-2`}>
                           {t ? <span title={(t.logic === 'derived' || t.logic === 'norm') && t.sources?.length
                               ? `(${t.sources.map((x) => svcName.get(x) ?? '?').join(' + ')})${t.logic === 'norm' ? ' × норматив' : ''} × цена` : LOGICS[t.logic].formula}>{LOGICS[t.logic].label}</span>
                             : <span className="text-muted">тарифов нет</span>}
                         </td>
-                        <td className={`whitespace-nowrap px-3 py-2.5 text-right ${sub}`}><b className="font-semibold">{p}</b> <span className="text-[11px] text-muted">{u}</span></td>
-                        <td className={`px-3 py-2.5 ${sub}`}>
-                          {!t ? '—' : s.kind === 'owner' ? <span className="text-muted">платит арендодатель</span>
-                            : who === null ? <span className="pill bg-ok-soft text-ok">Все арендаторы</span>
-                            : <span className="leading-snug text-ink-2">{who}</span>}
+                        <td className={tc}>
+                          {!t ? '—' : s.kind === 'owner' ? <span className="text-muted">платит арендодатель</span> : who === null ? 'Все арендаторы' : who}
                         </td>
-                        <td className={`whitespace-nowrap px-3 py-2.5 text-muted ${sub}`}>{t ? date(t.from) : '—'}</td>
+                        {/* Число отдельно от единицы — так разряды цен стоят ровно друг под другом. */}
+                        <td className={`${tc} whitespace-nowrap pr-1 text-right tabular-nums ${/\d/.test(p) ? 'font-semibold' : 'text-muted'}`}>{p}</td>
+                        <td className={`${tc} whitespace-nowrap pl-0 text-[12px] text-faint`}>{u}</td>
+                        <td className={`${tc} whitespace-nowrap text-right tabular-nums text-muted`}>{t ? date(t.from) : '—'}</td>
                         {i === 0 && (
-                          <td rowSpan={span} className="px-2 py-2">
+                          <td rowSpan={span} className={`${cell} py-2`}>
                             <Link href={`/tariffs/${s.id}`} aria-label={`Изменить услугу ${s.supplier} — ${s.name}`} title="Изменить"
-                              className="flex size-8 items-center justify-center rounded-lg border border-line bg-white text-ink-2 hover:border-cta hover:text-cta-ink"><Pencil size={15} /></Link>
+                              className="flex size-8 items-center justify-center rounded-lg text-faint opacity-0 transition hover:bg-white hover:text-cta-ink focus:opacity-100 group-hover:opacity-100"><Pencil size={15} /></Link>
                           </td>
                         )}
                       </tr>

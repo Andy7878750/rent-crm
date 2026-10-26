@@ -6,6 +6,8 @@ import { calculateMonth } from '@/lib/calc/engine';
 import { fmtMoney } from '@/lib/calc/format';
 import { defaultMonth, isMonth } from '@/lib/month';
 import { MonthNav } from '@/components/month-nav';
+import { CardMenu } from './card-menu';
+import { formatPhone } from '@/lib/phone';
 
 export const metadata = { title: 'Объекты' };
 
@@ -53,7 +55,9 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
           const sum = o.tenants.reduce((a, t) => a + (res.tenants[t.id]?.total ?? 0), 0);
           const filled = o.tenants.filter((t) => res.tenants[t.id]?.serviceCount && !res.tenants[t.id].missing.length).length;
           return (
-            <Link key={o.id} href={`/objects/${o.id}?m=${month}`} className="card flex flex-col overflow-hidden shadow-card transition hover:border-cta">
+            <div key={o.id} className="card relative flex flex-col overflow-hidden shadow-card transition hover:border-cta">
+              {/* Вся карточка кликабельна (ссылка поверх), меню «⋯» и телефон — над ней. */}
+              <Link href={`/objects/${o.id}?m=${month}`} aria-label={`Открыть ${o.short}`} className="absolute inset-0" />
               {/* Серая шапка, как у разделов формы: иконка, название, тип. */}
               <div className="flex items-center gap-3 border-b border-line bg-[#f6f8fb] px-[18px] py-3">
                 <span className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-cta-soft text-cta-ink"><Icon size={19} /></span>
@@ -62,8 +66,14 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
                   <span className="block truncate text-[12px] text-muted">{o.type === 'other' && o.typeLabel ? o.typeLabel : TYPE[o.type]}</span>
                 </span>
                 {o.isExample && <span className="pill flex-none border border-cta/40 bg-white text-cta-ink">Пример</span>}
+                <CardMenu objectId={o.id} name={o.short} month={month} />
               </div>
-              <div className="px-[18px] pt-3 text-[13px] text-muted">{o.address || 'Адрес не указан'}</div>
+              <div className="flex flex-col gap-1 px-[18px] pt-3 text-[13px] text-muted">
+                <span>{o.address || 'Адрес не указан'}</span>
+                <span>УК / ТСЖ: <span className="text-ink-2">{o.ukName || '—'}</span>
+                  {o.ukPhone && <> · <a href={`tel:${o.ukPhone.replace(/[^\d+]/g, '')}`} className="relative z-10 text-ink-2 hover:text-cta-ink hover:underline">{formatPhone(o.ukPhone)}</a></>}
+                </span>
+              </div>
               {o.isOwner ? (
                 <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#edf0f5] px-[18px] py-3 text-[12px] text-muted">
                   <span>Пользуется<b className="block text-[14px] text-ink">собственник</b></span>
@@ -88,7 +98,7 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
                   </div>
                 </>
               )}
-            </Link>
+            </div>
           );
         })}
       </div>

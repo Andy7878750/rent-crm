@@ -7,8 +7,8 @@ import { createPortal } from 'react-dom';
  * Всплывающая карточка поверх всей страницы (через portal), привязанная к полю anchor.
  * Не обрезается карточками с overflow: hidden; если снизу мало места — открывается вверх.
  */
-export function Floating({ anchor, width, children, panelRef }: {
-  anchor: React.RefObject<HTMLElement | null>; width?: number; children: React.ReactNode; panelRef?: React.RefObject<HTMLDivElement | null>;
+export function Floating({ anchor, width, children, panelRef, align = 'left' }: {
+  anchor: React.RefObject<HTMLElement | null>; width?: number; children: React.ReactNode; panelRef?: React.RefObject<HTMLDivElement | null>; align?: 'left' | 'right';
 }) {
   const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number; width: number } | null>(null);
   useLayoutEffect(() => {
@@ -16,7 +16,7 @@ export function Floating({ anchor, width, children, panelRef }: {
       const r = anchor.current?.getBoundingClientRect();
       if (!r) return;
       const w = width ?? r.width;
-      const left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+      const left = Math.max(8, Math.min(align === 'right' ? r.right - w : r.left, window.innerWidth - w - 8));
       const below = window.innerHeight - r.bottom;
       const h = panelRef?.current?.offsetHeight ?? 340;
       setPos(below < h + 12 && r.top > below
@@ -27,7 +27,7 @@ export function Floating({ anchor, width, children, panelRef }: {
     window.addEventListener('resize', place);
     window.addEventListener('scroll', place, true);
     return () => { window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true); };
-  }, [anchor, width, panelRef]);
+  }, [anchor, width, panelRef, align]);
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div ref={panelRef} style={{ position: 'fixed', zIndex: 60, left: pos?.left ?? -9999, top: pos?.top, bottom: pos?.bottom, width: pos?.width, visibility: pos ? 'visible' : 'hidden' }}>

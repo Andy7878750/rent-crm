@@ -8,6 +8,7 @@ import { defaultMonth, isMonth } from '@/lib/month';
 import { MonthNav } from '@/components/month-nav';
 import { CardMenu } from './card-menu';
 import { formatPhone } from '@/lib/phone';
+import { FadeText } from '@/components/fade-text';
 
 export const metadata = { title: 'Объекты' };
 
@@ -62,16 +63,19 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
               <div className="flex items-center gap-3 border-b border-line bg-[#f6f8fb] px-[18px] py-3">
                 <span className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-cta-soft text-cta-ink"><Icon size={19} /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-semibold">{o.short}</span>
+                  <FadeText className="text-[16px] font-semibold" title={o.short}>{o.short}</FadeText>
                   <span className="block truncate text-[12px] text-muted">{o.type === 'other' && o.typeLabel ? o.typeLabel : TYPE[o.type]}</span>
                 </span>
                 {o.isExample && <span className="pill flex-none border border-cta/40 bg-white text-cta-ink">Пример</span>}
-                <CardMenu objectId={o.id} name={o.short} month={month} />
+                <CardMenu objectId={o.id} name={o.short} />
               </div>
               <div className="flex flex-col gap-1 px-[18px] pt-3 text-[13px] text-muted">
-                <span>{o.address || 'Адрес не указан'}</span>
-                <span>УК / ТСЖ: <span className="text-ink-2">{o.ukName || '—'}</span>
-                  {o.ukPhone && <> · <a href={`tel:${o.ukPhone.replace(/[^\d+]/g, '')}`} className="relative z-10 text-ink-2 hover:text-cta-ink hover:underline">{formatPhone(o.ukPhone)}</a></>}
+                <FadeText title={o.address}>{o.address || 'Адрес не указан'}</FadeText>
+                {/* УК: название растворяется в конце, телефон всегда целиком. */}
+                <span className="flex min-w-0 items-baseline gap-1.5">
+                  <span className="flex-none">УК:</span>
+                  <FadeText className="flex-1 text-ink-2" title={o.ukName}>{o.ukName || '—'}</FadeText>
+                  {o.ukPhone && <a href={`tel:${o.ukPhone.replace(/[^\d+]/g, '')}`} className="relative z-10 flex-none whitespace-nowrap text-ink-2 hover:text-cta-ink hover:underline">{formatPhone(o.ukPhone)}</a>}
                 </span>
               </div>
               {o.isOwner ? (

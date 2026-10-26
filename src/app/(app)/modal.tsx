@@ -8,11 +8,11 @@ import { X } from 'lucide-react';
 const InModal = createContext(false);
 
 /** «Отмена»: в окне — закрыть его, на отдельной странице — перейти по ссылке. */
-export function CancelButton({ href }: { href: string }) {
+export function CancelButton({ href, label = 'Отмена' }: { href: string; label?: string }) {
   const router = useRouter();
   return useContext(InModal)
-    ? <button type="button" className="btn" onClick={() => router.back()}>Отмена</button>
-    : <Link href={href} className="btn">Отмена</Link>;
+    ? <button type="button" className="btn" onClick={() => router.back()}>{label}</button>
+    : <Link href={href} className="btn">{label}</Link>;
 }
 
 /** Всплывающее окно поверх страницы. Закрывается только крестиком или кнопкой «Отмена» — случайный клик мимо или Esc ввод не теряют. */

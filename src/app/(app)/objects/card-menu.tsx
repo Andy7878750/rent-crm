@@ -7,7 +7,7 @@ import { Floating } from '@/components/floating';
 import { archiveObject } from './actions';
 
 /** Меню «⋯» на карточке объекта: посмотреть, изменить, удалить (в архив, с подтверждением). */
-export function CardMenu({ objectId, name, month }: { objectId: string; name: string; month: string }) {
+export function CardMenu({ objectId, name }: { objectId: string; name: string }) {
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [pending, start] = useTransition();
@@ -45,7 +45,7 @@ export function CardMenu({ objectId, name, month }: { objectId: string; name: st
               </div>
             ) : (
               <>
-                <Link role="menuitem" href={`/objects/${objectId}?m=${month}`} className={item}><Eye size={16} /> Посмотреть</Link>
+                <Link role="menuitem" href={`/objects/${objectId}/info`} onClick={() => setOpen(false)} className={item}><Eye size={16} /> Посмотреть</Link>
                 <Link role="menuitem" href={`/objects/${objectId}/edit`} onClick={() => setOpen(false)} className={item}><Pencil size={16} /> Изменить</Link>
                 <button role="menuitem" type="button" onClick={() => setConfirm(true)} className={`${item} text-bad hover:bg-bad-soft hover:text-bad`}><Trash2 size={16} /> Удалить</button>
               </>

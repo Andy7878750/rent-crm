@@ -70,12 +70,16 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
                 <CardMenu objectId={o.id} name={o.short} />
               </div>
               <div className="flex flex-col gap-1 px-[18px] pt-3 text-[13px] text-muted">
-                <FadeText title={o.address}>{o.address || 'Адрес не указан'}</FadeText>
+                <span className="flex min-w-0 items-baseline gap-1.5">
+                  <b className="flex-none font-semibold text-ink-2">Адрес:</b>
+                  <FadeText className="flex-1" title={o.address}>{o.address || 'не указан'}</FadeText>
+                </span>
                 {/* УК: название растворяется в конце, телефон всегда целиком. */}
                 <span className="flex min-w-0 items-baseline gap-1.5">
-                  <span className="flex-none">УК:</span>
-                  <FadeText className="flex-1 text-ink-2" title={o.ukName}>{o.ukName || '—'}</FadeText>
-                  {o.ukPhone && <a href={`tel:${o.ukPhone.replace(/[^\d+]/g, '')}`} className="relative z-10 flex-none whitespace-nowrap text-ink-2 hover:text-cta-ink hover:underline">{formatPhone(o.ukPhone)}</a>}
+                  <b className="flex-none font-semibold text-ink-2">УК:</b>
+                  <FadeText className="flex-1" title={o.ukName}>{o.ukName || '—'}</FadeText>
+                  {o.ukPhone && <span className="flex-none whitespace-nowrap"><b className="font-semibold text-ink-2">Тел:</b>{' '}
+                    <a href={`tel:${o.ukPhone.replace(/[^\d+]/g, '')}`} className="relative z-10 hover:text-cta-ink hover:underline">{formatPhone(o.ukPhone)}</a></span>}
                 </span>
               </div>
               {o.isOwner ? (

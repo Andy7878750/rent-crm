@@ -15,14 +15,8 @@ export default async function EditObjectPage({ params }: PageProps<'/objects/[id
   const customTypes = await readObjectTypes(user.accountId);
   return (
     <>
-      <div className="flex flex-wrap items-center gap-3 pr-11">
-        <h1 className="text-[22px] font-bold">Изменить объект</h1>
-        <div className="flex-1" />
-        <form action={archiveObject.bind(null, o.id)}>
-          <button className="btn text-bad">Убрать в архив</button>
-        </form>
-      </div>
-      <ObjectForm customTypes={customTypes} objectId={o.id} cancelHref={`/objects/${o.id}`} initial={{
+      <h1 className="pr-11 text-[22px] font-bold">Изменить объект</h1>
+      <ObjectForm archive={archiveObject.bind(null, o.id)} customTypes={customTypes} objectId={o.id} cancelHref={`/objects/${o.id}`} initial={{
         type: o.type, typeLabel: o.typeLabel, short: o.short, address: o.address, floor: o.floor, ukName: o.ukName, ukPhone: o.ukPhone,
         cabinetUrl: o.cabinetUrl, cabinetLogin: o.cabinetLogin, cabinetHint: o.cabinetHint, isOwner: o.isOwner,
         tenants: o.isOwner ? [] : o.tenants.map((t) => ({ id: t.id, name: t.name, share: String(Number(t.share)).replace('.', ','), phone: t.phone, email: t.email, contract: t.contract, contractEnd: t.contractEnd ?? '' })),

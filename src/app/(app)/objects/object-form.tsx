@@ -4,7 +4,7 @@ import { CancelButton } from '../modal';
 import { Select } from '@/components/select';
 import { DateInput } from '@/components/date-input';
 import { formatPhone } from '@/lib/phone';
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useTransition } from 'react';
 import { Eye, EyeOff, X } from 'lucide-react';
 import { addObjectType, removeObjectType, saveObject, type ObjectFormState } from './actions';
 
@@ -16,10 +16,12 @@ export type ObjectFormValues = {
 
 const blank = () => ({ name: '', share: '', phone: '', email: '', contract: '', contractEnd: '' });
 
-export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: { objectId: string | null; initial: ObjectFormValues; cancelHref: string; customTypes?: string[] }) {
+export function ObjectForm({ objectId, initial, cancelHref, customTypes = [], archive }: { objectId: string | null; initial: ObjectFormValues; cancelHref: string; customTypes?: string[]; archive?: () => Promise<void> }) {
   const [state, action, pending] = useActionState<ObjectFormState, FormData>(saveObject.bind(null, objectId), {});
   const [owner, setOwner] = useState(initial.isOwner);
   const [peekHint, setPeekHint] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [archiving, startArchive] = useTransition();
   const [ukPhone, setUkPhone] = useState(formatPhone(initial.ukPhone));
   const [custom, setCustom] = useState(() => initial.typeLabel && !customTypes.includes(initial.typeLabel) ? [...customTypes, initial.typeLabel] : customTypes);
   const [typeValue, setTypeValue] = useState(initial.type === 'other' && initial.typeLabel ? `c:${initial.typeLabel}` : initial.type);
@@ -133,9 +135,23 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [] }: 
       </section>
 
       <p className="hint">После сохранения привяжите арендаторов к услугам в «Тарифах и услугах» — тогда на странице объекта появятся нужные поля.</p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button className="btn btn-primary" disabled={pending}>{pending ? 'Сохраняем…' : objectId ? 'Сохранить изменения' : 'Создать объект'}</button>
         <CancelButton href={cancelHref} />
+        {archive && (
+          <span className="ml-auto flex items-center gap-2">
+            {confirmArchive ? (
+              <>
+                <span className="text-[13px] text-muted">Убрать объект в архив?</span>
+                <button type="button" className="btn border-bad/40 text-bad hover:bg-bad-soft" disabled={archiving}
+                  onClick={() => startArchive(() => archive())}>{archiving ? 'Убираем…' : 'Да, в архив'}</button>
+                <button type="button" className="btn" onClick={() => setConfirmArchive(false)}>Нет</button>
+              </>
+            ) : (
+              <button type="button" className="btn text-bad hover:bg-bad-soft" onClick={() => setConfirmArchive(true)}>Убрать в архив</button>
+            )}
+          </span>
+        )}
       </div>
     </form>
   );

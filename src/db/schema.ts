@@ -3,8 +3,10 @@
  * Каждая строка данных принадлежит аккаунту арендодателя (account_id) — так данные разных арендодателей не смешиваются.
  */
 import {
-  boolean, char, date, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid,
+  boolean, char, customType, date, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core';
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' });
 
 const id = () => uuid('id').primaryKey().defaultRandom();
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -170,4 +172,17 @@ export const emailTokens = pgTable('email_tokens', {
   kind: text('kind', { enum: ['reset', 'verify'] }).notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: createdAt(),
+});
+
+/**
+ * Подсказки «?» в интерфейсе — общие для всех пользователей сервиса, редактирует администратор сервиса.
+ * key — место в интерфейсе (например, «service.supplier»), файл — пример (картинка или PDF).
+ */
+export const helpTips = pgTable('help_tips', {
+  key: text('key').primaryKey(),
+  text: text('text').notNull().default(''),
+  fileName: text('file_name'),
+  fileType: text('file_type'),
+  fileData: bytea('file_data'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

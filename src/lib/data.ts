@@ -119,3 +119,16 @@ export async function writeObjectTypes(accountId: string, types: string[]) {
   const [acc] = await db.select({ settings: schema.accounts.settings }).from(schema.accounts).where(eq(schema.accounts.id, accountId)).limit(1);
   await db.update(schema.accounts).set({ settings: { ...(acc?.settings ?? {}), objectTypes: types } }).where(eq(schema.accounts.id, accountId));
 }
+
+/** Все подсказки «?» (без содержимого файлов): заданные администратором, иначе текст по умолчанию. */
+export async function loadHelpTips(): Promise<Record<string, import('@/lib/help').HelpTip>> {
+  const { HELP } = await import('@/lib/help');
+  const rows = await db.select({ key: schema.helpTips.key, text: schema.helpTips.text, fileName: schema.helpTips.fileName, fileType: schema.helpTips.fileType })
+    .from(schema.helpTips);
+  const out: Record<string, import('@/lib/help').HelpTip> = {};
+  for (const h of HELP) {
+    const r = rows.find((x) => x.key === h.key);
+    out[h.key] = { label: h.label, text: r ? r.text : h.text, file: r?.fileName ? { name: r.fileName, type: r.fileType ?? '' } : null };
+  }
+  return out;
+}

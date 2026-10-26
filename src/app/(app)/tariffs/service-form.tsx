@@ -2,6 +2,7 @@
 
 import { CancelButton } from '../modal';
 import { DateInput } from '@/components/date-input';
+import { Help } from '@/components/help';
 import { useActionState, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { KINDS, LOGICS, type LogicField } from '@/lib/calc/logics';
@@ -41,17 +42,17 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
       <section className="card overflow-hidden">
         <div className="border-b border-line bg-[#f6f8fb] px-4 py-2.5 eyebrow">Услуга</div>
         <div className="grid gap-3.5 p-4 sm:grid-cols-[1fr_1fr_140px]">
-          <label className="label"><span>Поставщик <span className="text-[#b4362b]">*</span></span>
+          <label className="label"><span>Поставщик <span className="text-[#b4362b]">*</span><Help k="service.supplier" /></span>
             <span className={`field ${e.supplier ? 'field-err' : ''}`}><input value={d.supplier} onChange={(ev) => setD({ ...d, supplier: ev.target.value })} placeholder="Водоканал" list="suppliers" /></span>{err('supplier')}</label>
-          <label className="label"><span>Название <span className="text-[#b4362b]">*</span></span>
+          <label className="label"><span>Название <span className="text-[#b4362b]">*</span><Help k="service.name" /></span>
             <span className={`field ${e.name ? 'field-err' : ''}`}><input value={d.name} onChange={(ev) => setD({ ...d, name: ev.target.value })} placeholder="Холодная вода" /></span>{err('name')}</label>
-          <label className="label"><span>Единица <span className="text-[#b4362b]">*</span></span>
+          <label className="label"><span>Единица <span className="text-[#b4362b]">*</span><Help k="service.unit" /></span>
             <span className={`field ${e.unit ? 'field-err' : ''}`}><input value={d.unit} onChange={(ev) => setD({ ...d, unit: ev.target.value })} list="units" /></span>{err('unit')}</label>
           <datalist id="units">{UNITS.map((u) => <option key={u} value={u} />)}</datalist>
           <datalist id="suppliers">{[...new Set(others.map((o) => o.supplier))].map((s) => <option key={s} value={s} />)}</datalist>
         </div>
         <div className="px-4 pb-4">
-          <div className="mb-1.5 text-[13px] text-ink-2">Счёт</div>
+          <div className="mb-1.5 text-[13px] text-ink-2">Счёт<Help k="service.kind" /></div>
           <div role="radiogroup" className="grid gap-2 sm:grid-cols-3">
             {(Object.keys(KINDS) as ServiceKind[]).map((k) => (
               <button key={k} type="button" role="radio" aria-checked={d.kind === k} onClick={() => setKind(k)}
@@ -80,7 +81,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
             </div>
             <div className="flex flex-col gap-3.5 p-4">
               <div>
-                <div className="mb-1.5 text-[13px] text-ink-2">Логика расчёта</div>
+                <div className="mb-1.5 text-[13px] text-ink-2">Логика расчёта<Help k="tariff.logic" /></div>
                 <div role="radiogroup" className="flex flex-wrap gap-2">
                   {K.logics.map((l) => (
                     <button key={l} type="button" role="radio" aria-checked={t.logic === l} onClick={() => setT(i, { logic: l })}
@@ -94,7 +95,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
               {L.fields.filter((f) => f !== 'sources').length > 0 && (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {L.fields.filter((f) => f !== 'sources').map((f) => (
-                    <label key={f} className={`label ${f === 'extraName' ? 'sm:col-span-2' : ''}`}><span>{fieldLabel(f, t.logic)}{L.required.includes(f) && <span className="text-[#b4362b]"> *</span>}</span>
+                    <label key={f} className={`label ${f === 'extraName' ? 'sm:col-span-2' : ''}`}><span>{fieldLabel(f, t.logic)}{L.required.includes(f) && <span className="text-[#b4362b]"> *</span>}{f === 'price' && <Help k="tariff.price" />}</span>
                       <span className={`field ${e[`t${i}.${f}`] ? 'field-err' : ''}`}>
                         <input value={t[f] as string} onChange={(ev) => setT(i, { [f]: ev.target.value })} inputMode={f === 'extraName' ? 'text' : 'decimal'} className={f === 'extraName' ? '' : 'text-right'} />
                       </span>{err(`t${i}.${f}`)}</label>
@@ -122,7 +123,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
 
               {d.kind !== 'owner' && (
                 <div>
-                  <div className="mb-1.5 text-[13px] text-ink-2">Для кого</div>
+                  <div className="mb-1.5 text-[13px] text-ink-2">Для кого<Help k="tariff.who" /></div>
                   <label className="mb-2 flex cursor-pointer items-center gap-2">
                     <input type="checkbox" checked={t.whoAll} disabled={allTakenBy !== null || takenBy.size > 0}
                       onChange={() => setT(i, { whoAll: !t.whoAll, who: [] })} />
@@ -155,7 +156,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
                 </div>
               )}
 
-              <div className="label max-w-[220px]"><span>Действует с</span>
+              <div className="label max-w-[220px]"><span>Действует с<Help k="tariff.from" /></span>
                 <DateInput value={t.validFrom} onChange={(v) => setT(i, { validFrom: v })} error={!!e[`t${i}.validFrom`]} />
                 {err(`t${i}.validFrom`)}</div>
             </div>

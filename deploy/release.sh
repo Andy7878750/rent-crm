@@ -8,7 +8,7 @@ tar -xzf "$ARCHIVE" -C "$REL"
 chown -R app:app "$REL"
 # Настройки почты из выкладки: старые строки APP_URL/SMTP_*/MAIL_FROM заменяем новыми.
 if [ -f /root/mail.env ]; then
-  grep -vE '^(APP_URL|SMTP_[A-Z]+|MAIL_FROM|REGISTER_ALLOW|REGISTRATION_OPEN)=' /etc/rent-crm.env > /etc/rent-crm.env.new || true
+  grep -vE '^(APP_URL|SMTP_[A-Z]+|MAIL_FROM|REGISTER_ALLOW|REGISTRATION_OPEN|ADMIN_EMAILS)=' /etc/rent-crm.env > /etc/rent-crm.env.new || true
   cat /root/mail.env >> /etc/rent-crm.env.new
   chmod 640 /etc/rent-crm.env.new && chown root:app /etc/rent-crm.env.new
   mv /etc/rent-crm.env.new /etc/rent-crm.env

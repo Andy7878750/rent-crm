@@ -181,6 +181,8 @@ export const emailTokens = pgTable('email_tokens', {
 export const helpTips = pgTable('help_tips', {
   key: text('key').primaryKey(),
   text: text('text').notNull().default(''),
+  /** Показывать «?» (null — как задано по умолчанию в src/lib/help.ts). */
+  enabled: boolean('enabled'),
   fileName: text('file_name'),
   fileType: text('file_type'),
   fileData: bytea('file_data'),

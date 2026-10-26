@@ -18,7 +18,7 @@ export async function saveHelpTip(key: string, _prev: HelpState, fd: FormData): 
   const text = String(fd.get('text') ?? '').trim().slice(0, 2000);
   const file = fd.get('file');
   const drop = fd.get('dropFile') === 'on';
-  const set: Partial<typeof schema.helpTips.$inferInsert> = { text, updatedAt: new Date() };
+  const set: Partial<typeof schema.helpTips.$inferInsert> = { text, enabled: fd.get('enabled') === 'on', updatedAt: new Date() };
   if (file instanceof File && file.size > 0) {
     if (file.size > MAX) return { error: 'Файл больше 5 МБ' };
     if (!TYPES.includes(file.type)) return { error: 'Можно картинку (PNG, JPG, WebP, GIF) или PDF' };
@@ -29,4 +29,15 @@ export async function saveHelpTip(key: string, _prev: HelpState, fd: FormData): 
   await db.insert(schema.helpTips).values({ key, ...set }).onConflictDoUpdate({ target: schema.helpTips.key, set });
   revalidatePath('/', 'layout');
   return { ok: true };
+}
+
+/** Быстро включить/выключить «?» (галочка без сохранения текста). */
+export async function toggleHelpTip(key: string, on: boolean) {
+  const user = await requireUser();
+  if (!isServiceAdmin(user.email) || !HELP_KEYS.includes(key)) return;
+  const { HELP } = await import('@/lib/help');
+  const def = HELP.find((h) => h.key === key)!;
+  await db.insert(schema.helpTips).values({ key, text: def.text, enabled: on })
+    .onConflictDoUpdate({ target: schema.helpTips.key, set: { enabled: on, updatedAt: new Date() } });
+  revalidatePath('/', 'layout');
 }

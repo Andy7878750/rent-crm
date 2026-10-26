@@ -1,0 +1,1 @@
+ALTER TABLE "help_tips" ADD COLUMN "enabled" boolean;

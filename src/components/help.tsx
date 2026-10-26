@@ -21,7 +21,7 @@ export function Help({ k }: { k: string }) {
   const panel = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
-  if (!tip || (!tip.text && !tip.file && !admin)) return null;
+  if (!tip || !tip.on || (!tip.text && !tip.file)) return null;
 
   const show = () => { clearTimeout(timer.current); setOpen(true); };
   const hide = () => { clearTimeout(timer.current); timer.current = setTimeout(() => setOpen(false), 150); };

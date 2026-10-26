@@ -55,10 +55,13 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
           <div className="mb-1.5 text-[13px] text-ink-2">Счёт<Help k="service.kind" /></div>
           <div role="radiogroup" className="grid gap-2 sm:grid-cols-3">
             {(Object.keys(KINDS) as ServiceKind[]).map((k) => (
-              <button key={k} type="button" role="radio" aria-checked={d.kind === k} onClick={() => setKind(k)}
-                className={`rounded-lg border px-3 py-2.5 text-left ${d.kind === k ? 'border-2 border-accent bg-[#f2f5f8]' : 'border-line-strong bg-white'}`}>
-                <b className="block font-semibold">{KINDS[k].label}</b><span className="hint">{KINDS[k].hint}</span>
-              </button>
+              <span key={k} className="relative flex">
+                <button type="button" role="radio" aria-checked={d.kind === k} onClick={() => setKind(k)}
+                  className={`w-full rounded-lg border px-3 py-2.5 pr-7 text-left ${d.kind === k ? 'border-2 border-accent bg-[#f2f5f8]' : 'border-line-strong bg-white'}`}>
+                  <b className="block font-semibold">{KINDS[k].label}</b><span className="hint">{KINDS[k].hint}</span>
+                </button>
+                <span className="absolute right-2 top-2"><Help k={`service.kind.${k}`} /></span>
+              </span>
             ))}
           </div>
         </div>
@@ -84,8 +87,11 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
                 <div className="mb-1.5 text-[13px] text-ink-2">Логика расчёта<Help k="tariff.logic" /></div>
                 <div role="radiogroup" className="flex flex-wrap gap-2">
                   {K.logics.map((l) => (
-                    <button key={l} type="button" role="radio" aria-checked={t.logic === l} onClick={() => setT(i, { logic: l })}
-                      className={`rounded-full border px-3 py-1.5 text-[13px] font-semibold ${t.logic === l ? 'border-accent bg-accent text-white' : 'border-line-strong bg-white'}`}>{LOGICS[l].label}</button>
+                    <span key={l} className="inline-flex items-center">
+                      <button type="button" role="radio" aria-checked={t.logic === l} onClick={() => setT(i, { logic: l })}
+                        className={`rounded-full border px-3 py-1.5 text-[13px] font-semibold ${t.logic === l ? 'border-accent bg-accent text-white' : 'border-line-strong bg-white'}`}>{LOGICS[l].label}</button>
+                      <Help k={`tariff.logic.${l}`} />
+                    </span>
                   ))}
                 </div>
                 <p className="mt-2 text-[12px] text-muted">Формула: {L.formula}.{L.note ? ` ${L.note}` : ''}</p>
@@ -95,7 +101,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
               {L.fields.filter((f) => f !== 'sources').length > 0 && (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {L.fields.filter((f) => f !== 'sources').map((f) => (
-                    <label key={f} className={`label ${f === 'extraName' ? 'sm:col-span-2' : ''}`}><span>{fieldLabel(f, t.logic)}{L.required.includes(f) && <span className="text-[#b4362b]"> *</span>}{f === 'price' && <Help k="tariff.price" />}</span>
+                    <label key={f} className={`label ${f === 'extraName' ? 'sm:col-span-2' : ''}`}><span>{fieldLabel(f, t.logic)}{L.required.includes(f) && <span className="text-[#b4362b]"> *</span>}<Help k={f === 'normPrice' ? 'tariff.price' : `tariff.${f}`} /></span>
                       <span className={`field ${e[`t${i}.${f}`] ? 'field-err' : ''}`}>
                         <input value={t[f] as string} onChange={(ev) => setT(i, { [f]: ev.target.value })} inputMode={f === 'extraName' ? 'text' : 'decimal'} className={f === 'extraName' ? '' : 'text-right'} />
                       </span>{err(`t${i}.${f}`)}</label>
@@ -105,7 +111,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
 
               {L.fields.includes('sources') && (
                 <div>
-                  <div className="mb-1.5 text-[13px] text-ink-2">Расход каких услуг <span className="text-[#b4362b]">*</span></div>
+                  <div className="mb-1.5 text-[13px] text-ink-2">Расход каких услуг <span className="text-[#b4362b]">*</span><Help k="tariff.sources" /></div>
                   <div className="flex flex-wrap gap-2">
                     {others.length === 0 && <span className="hint">Сначала создайте услуги со счётчиками (например, холодную и горячую воду).</span>}
                     {others.map((o) => {

@@ -1,16 +1,25 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useTransition } from 'react';
 import { Paperclip } from 'lucide-react';
-import { saveHelpTip, type HelpState } from '../actions';
+import { saveHelpTip, toggleHelpTip, type HelpState } from '../actions';
 
-export function TipForm({ k, label, text, file, defaultText }: { k: string; label: string; text: string; file: { name: string; type: string } | null; defaultText: string }) {
+export function TipForm({ k, label, text, file, defaultText, on }: { k: string; label: string; text: string; file: { name: string; type: string } | null; defaultText: string; on: boolean }) {
   const [state, action, pending] = useActionState<HelpState, FormData>(saveHelpTip.bind(null, k), {});
   const [value, setValue] = useState(text);
   const [picked, setPicked] = useState('');
+  const [shown, setShown] = useState(on);
+  const [, startToggle] = useTransition();
   return (
-    <form id={k} action={action} className="grid scroll-mt-24 gap-2 border-b border-[#edf0f5] px-4 py-3.5 last:border-b-0 sm:grid-cols-[180px_1fr]">
-      <div className="pt-1.5 font-semibold">{label}<span className="block text-[11px] font-normal text-faint">{k}</span></div>
+    <form id={k} action={action} className={`grid ${shown ? '' : 'bg-[#fafbfc]'} scroll-mt-24 gap-2 border-b border-[#edf0f5] px-4 py-3.5 last:border-b-0 sm:grid-cols-[180px_1fr]`}>
+      <div className="flex flex-col gap-2 pt-1.5">
+        <span className={`font-semibold ${shown ? '' : 'text-muted'}`}>{label}<span className="block text-[11px] font-normal text-faint">{k}</span></span>
+        <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-2">
+          <input type="checkbox" name="enabled" checked={shown}
+            onChange={() => { const v = !shown; setShown(v); startToggle(() => toggleHelpTip(k, v)); }} />
+          Показывать «?»
+        </label>
+      </div>
       <div className="flex flex-col gap-2">
         <span className="field items-start"><textarea name="text" value={value} onChange={(e) => setValue(e.target.value)} rows={3} maxLength={2000}
           className="min-h-[72px] w-full resize-y border-0 bg-transparent py-2 text-[14px] outline-none" /></span>

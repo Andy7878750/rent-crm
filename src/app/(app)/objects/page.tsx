@@ -73,15 +73,15 @@ export default async function ObjectsPage({ searchParams }: PageProps<'/objects'
                 {/* Иконка + строка; длинный текст растворяется в конце, телефон всегда целиком. */}
                 <span className="flex min-w-0 items-center gap-2">
                   <MapPin size={15} className="flex-none text-faint" aria-label="Адрес" />
-                  <FadeText className="flex-1" title={o.address}>{o.address || 'Адрес не указан'}</FadeText>
+                  <FadeText className="flex-1" title={o.address}><b className="font-semibold text-ink-2">Адрес:</b> {o.address || '—'}</FadeText>
                 </span>
                 <span className="flex min-w-0 items-center gap-2">
                   <Building2 size={15} className="flex-none text-faint" aria-hidden />
-                  <FadeText className="flex-1" title={o.ukName}>УК: <span className="text-ink-2">{o.ukName || '—'}</span></FadeText>
+                  <FadeText className="flex-1" title={o.ukName}><b className="font-semibold text-ink-2">УК:</b> {o.ukName || '—'}</FadeText>
                 </span>
                 <span className="flex min-w-0 items-center gap-2">
                   <Phone size={15} className="flex-none text-faint" aria-hidden />
-                  <span className="whitespace-nowrap">Тел.: {o.ukPhone
+                  <span className="whitespace-nowrap"><b className="font-semibold text-ink-2">Тел.:</b> {o.ukPhone
                     ? <a href={`tel:${o.ukPhone.replace(/[^\d+]/g, '')}`} className="relative z-10 text-ink-2 hover:text-cta-ink hover:underline">{formatPhone(o.ukPhone)}</a>
                     : <span className="text-ink-2">—</span>}</span>
                 </span>

@@ -123,3 +123,44 @@ test('собственник своего объекта: «Все» распр�
 });
 
 const amount2 = (r: ReturnType<typeof calculateMonth>, tid: string, label: string) => r.tenants[tid].lines.find((l) => l.label === label)?.amount;
+
+test('квитанция объекта (objectId) считается только у арендаторов этого объекта, даже при «Все»', () => {
+  const ku = august2026.services.find((s) => s.id === 'ku')!;
+  const input: MonthInput = {
+    ...august2026,
+    services: [
+      ...august2026.services.filter((s) => s.id !== 'ku'),
+      { ...ku, id: 'ku-k61', objectId: 'k61' },
+      { ...ku, id: 'ku-p15', objectId: 'p15' },
+    ],
+    bills: {
+      ...august2026.bills,
+      k61: { ...august2026.bills.k61, 'ku-k61': august2026.bills.k61.ku },
+      p15: { ...august2026.bills.p15, 'ku-p15': august2026.bills.p15.ku },
+    },
+  };
+  const r = calculateMonth(input);
+  assert.ok(!r.tenants.t3.lines.some((l) => l.serviceId === 'ku-p15'), 'чужая квитанция не попадает');
+  assert.equal(r.tenants.t4.lines.find((l) => l.serviceId === 'ku-k61')?.amount, 2293.07);
+  assert.equal(r.tenants.t1.lines.find((l) => l.serviceId === 'ku-p15')?.amount, 2301.22);
+  // Итоги не изменились: те же суммы, только квитанции разложены по объектам.
+  assert.equal(r.tenants.t1.total, 13692.86);
+  assert.equal(r.tenants.t4.total, 8243.68);
+  assert.equal(r.owner.k61.lines.filter((l) => l.serviceId.startsWith('ku')).length, 0);
+});
+
+test('«Поровну»: сумма квитанции делится поровну между платящими, сумма сходится до копейки', () => {
+  const input: MonthInput = {
+    ...august2026,
+    services: [...august2026.services,
+      { id: 'net', supplier: 'Ростелеком', name: 'Интернет', unit: '₽', kind: 'common', objectId: 'k61',
+        tariffs: [{ logic: 'equal', who: 'all', from: '2026-08-01' }] }],
+    bills: { ...august2026.bills, k61: { ...august2026.bills.k61, net: 1000.01 } },
+  };
+  const r = calculateMonth(input);
+  const a = r.tenants.t3.lines.find((l) => l.serviceId === 'net')!.amount!;
+  const b = r.tenants.t4.lines.find((l) => l.serviceId === 'net')!.amount!;
+  assert.equal(sumMoney([a, b]), 1000.01, 'копейка округления не теряется');
+  assert.ok(Math.abs(a - b) <= 0.01);
+  assert.equal(r.tenants.t1.lines.some((l) => l.serviceId === 'net'), false, 'на другом объекте не появляется');
+});

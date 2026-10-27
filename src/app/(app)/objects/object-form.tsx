@@ -138,7 +138,7 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [], ar
         )}
       </section>
 
-      <p className="hint">После сохранения привяжите арендаторов к услугам в «Тарифах и услугах» — тогда на странице объекта появятся нужные поля.</p>
+      <p className="hint">После сохранения добавьте на странице объекта квитанции и счётчики — для каждой квитанции один раз выбираете, как делить её между арендаторами.</p>
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn btn-primary" disabled={pending}>{pending ? 'Сохраняем…' : objectId ? 'Сохранить изменения' : 'Создать объект'}</button>
         <CancelButton href={cancelHref} />

@@ -31,7 +31,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<'/reports
   const rows = objects.map((o) => {
     let rowSum = 0;
     const cells: PayCellData[] = suppliers.map((sup, ci) => {
-      const svcs = input.services.filter((s) => s.supplier === sup);
+      const svcs = input.services.filter((s) => s.supplier === sup && (!s.objectId || s.objectId === o.id));
       // Поставщик относится к объекту, если его тариф действует хотя бы для одного арендатора объекта (или «только арендодатель»).
       const auto = svcs.some((s) => s.kind === 'owner' || o.tenants.some((t) => activeTariff(s, t.id, month)));
       const manual = payCols[`${o.id}|${sup}`];
@@ -60,9 +60,9 @@ export default async function PaymentsPage({ searchParams }: PageProps<'/reports
         <div className="card px-4 py-3.5"><div className="text-[12px] text-muted">Оплачено</div><div className="text-[22px] font-bold text-ok">{fmtMoney(paid)} ₽</div></div>
         <div className="card px-4 py-3.5"><div className="text-[12px] text-muted">Осталось оплатить</div><div className="text-[22px] font-bold">{fmtMoney(total - paid)} ₽</div><div className="hint">не оплачено счетов: {unpaid}</div></div>
       </div>
-      <p className="text-[13px] text-muted">Колонки — поставщики, привязанные к объекту в «Тарифах и услугах». Сумма здесь и в «Вводе данных» — одно и то же число. Кружок — отметка «оплачено». Серая клетка — поставщик не привязан, «+» добавляет его.</p>
+      <p className="text-[13px] text-muted">Колонки — поставщики из квитанций объектов. Сумма здесь и в квитанции объекта — одно и то же число. Кружок — отметка «оплачено». Серая клетка — поставщик не привязан, «+» добавляет его.</p>
       {suppliers.length === 0 ? (
-        <div className="card p-6 text-ink-2">Сначала создайте услуги в «Тарифах и услугах».</div>
+        <div className="card p-6 text-ink-2">Сначала добавьте квитанции на страницах объектов.</div>
       ) : (
         <div className="card overflow-x-auto">
           <div role="table" aria-label="Оплаты поставщикам" style={{ minWidth: 180 + suppliers.length * 140 + 150 }}>

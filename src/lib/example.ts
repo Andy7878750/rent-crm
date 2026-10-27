@@ -20,16 +20,17 @@ export async function createExample(tx: Tx, accountId: string, month: string) {
     { objectId: obj.id, name: 'Салон Эгоист', share: '45', phone: '+7 (900) 000-00-04', sort: 1 },
   ]).returning({ id: schema.tenants.id });
 
-  const svc = async (sort: number, supplier: string, name: string, unit: string, kind: 'common' | 'indiv' | 'owner') =>
-    (await tx.insert(schema.services).values({ accountId, supplier, name, unit, kind, sort }).returning({ id: schema.services.id }))[0].id;
+  // Квитанции объекта: вид (src/lib/receipts.ts), поставщик, строка, единица.
+  const svc = async (sort: number, category: string, supplier: string, name: string, unit: string, kind: 'common' | 'indiv' | 'owner') =>
+    (await tx.insert(schema.services).values({ accountId, objectId: obj.id, category, supplier, name, unit, kind, sort }).returning({ id: schema.services.id }))[0].id;
 
-  const ku = await svc(0, 'Ком. услуги', 'Содержание и ремонт', '₽', 'common');
-  const pesk = await svc(1, 'ПЕСК', 'Электричество', 'кВт·ч', 'common');
-  const cw = await svc(2, 'Водоканал', 'Холодная вода', 'м³', 'indiv');
-  const hw = await svc(3, 'ГУП ТЭК', 'Горячая вода', 'м³', 'common');
-  const dr = await svc(4, 'Водоканал', 'Водоотведение', 'м³', 'indiv');
-  const trash = await svc(5, 'Ком. услуги', 'Вывоз мусора', '₽', 'common');
-  const kr = await svc(6, 'Фонд капремонта', 'Капитальный ремонт', '₽', 'owner');
+  const ku = await svc(0, 'uk', 'УК', 'Содержание и ремонт', '₽', 'common');
+  const pesk = await svc(1, 'el', 'ПЕСК', 'Электричество', 'кВт·ч', 'common');
+  const cw = await svc(2, 'cw', 'Водоканал', 'Холодная вода', 'м³', 'indiv');
+  const hw = await svc(3, 'hw', 'ГУП ТЭК', 'Горячая вода', 'м³', 'common');
+  const dr = await svc(4, 'dr', 'Водоканал', 'Водоотведение', 'м³', 'indiv');
+  const trash = await svc(5, 'trash', 'АО «НЭО»', 'Вывоз мусора', '₽', 'common');
+  const kr = await svc(6, 'kr', 'Фонд капремонта', 'Капитальный ремонт', '₽', 'owner');
 
   const from = `${shiftMonth(month, -6)}-01`;
   const tariff = async (serviceId: string, v: Partial<typeof schema.tariffs.$inferInsert> & { logic: typeof schema.tariffs.$inferInsert['logic'] }, who?: string[]) => {
@@ -57,6 +58,11 @@ export async function createExample(tx: Tx, accountId: string, month: string) {
     { tenantId: t2.id, serviceId: pesk, month, usage: '259.845' },
     { tenantId: t2.id, serviceId: cw, month, prev: '643', cur: '647' },
     { tenantId: t2.id, serviceId: hw, month, prev: '28', cur: '30' },
+  ]);
+  await tx.insert(schema.meters).values([
+    { objectId: obj.id, resource: 'el', number: '', place: 'общий, ВРУ', sort: 0 },
+    { objectId: obj.id, tenantId: t1.id, resource: 'el', number: '', sort: 1 },
+    { objectId: obj.id, tenantId: t2.id, resource: 'el', number: '', sort: 2 },
   ]);
   return obj.id;
 }

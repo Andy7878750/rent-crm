@@ -8,7 +8,6 @@ import type {
 } from './types.ts';
 import { fmtMoney, fmtPrice, fmtQty, round2, sumMoney } from './format.ts';
 
-/** Тариф услуги, действующий для арендатора в расчётном месяце (самый поздний по дате начала). */
 /** Действующий тариф услуги для арендатора (или собственника своего объекта) на месяц. «Все» — все без исключения. */
 export function activeTariff(service: Service, tenantId: string, month: string): Tariff | null {
   let best: Tariff | null = null;
@@ -35,6 +34,9 @@ interface Ctx {
   input: MonthInput;
   obj: PropertyObject;
 }
+
+/** Квитанция объекта относится только к своему объекту; старые услуги аккаунта — к любому. */
+const onObject = (s: Service, obj: PropertyObject) => !s.objectId || s.objectId === obj.id;
 
 /** Расход арендатора по услуге (для день/ночь — сумма зон). */
 function tenantUsage(ctx: Ctx, tenantId: string, service: Service, tariff: Tariff): number | null {
@@ -64,6 +66,13 @@ function meterRestPart(usage: number | null, tr: Tariff): number | null {
   return usage * tr.price + extra;
 }
 
+/** Доля «поровну» в копейках: остаток копеек отдаём первым по порядку, чтобы сумма сошлась с квитанцией. */
+function equalPart(bill: number, n: number, i: number): number {
+  const cents = Math.round(bill * 100);
+  const base = Math.floor(cents / n);
+  return (base + (i < cents - base * n ? 1 : 0)) / 100;
+}
+
 function calcTenant(ctx: Ctx, tenant: Tenant): TenantBill {
   const { input, obj } = ctx;
   const lines: BillLine[] = [];
@@ -74,7 +83,7 @@ function calcTenant(ctx: Ctx, tenant: Tenant): TenantBill {
 
   const pairs: Array<[Service, Tariff]> = [];
   for (const s of input.services) {
-    if (s.kind === 'owner') continue;
+    if (s.kind === 'owner' || !onObject(s, obj)) continue;
     const tr = activeTariff(s, tenant.id, input.month);
     if (tr) pairs.push([s, tr]);
   }
@@ -170,6 +179,15 @@ function calcTenant(ctx: Ctx, tenant: Tenant): TenantBill {
           rest === null ? undefined : `остаток = ${fmtMoney(bill!)} ₽ по счёту − ${fmtMoney(indivSum!)} ₽ по счётчикам арендаторов`, 'common');
         break;
       }
+      case 'equal': {
+        const bill = bills[s.id];
+        if (bill === undefined) missing.push(`Сумма по квитанции: ${s.supplier} — ${s.name}`);
+        const m = mates(ctx, s, 'equal');
+        const i = m.findIndex(([t]) => t.id === tenant.id);
+        line(s, tr, s.name, `${bill === undefined ? '—' : fmtMoney(bill)} руб. ÷ ${m.length}`,
+          bill === undefined ? null : equalPart(bill, m.length, i), undefined, 'common');
+        break;
+      }
       case 'fixed':
         if (p === null) missing.push(`${s.name}: не указана сумма`);
         line(s, tr, s.name, 'фиксированная сумма', p, undefined, 'fixed');
@@ -189,6 +207,7 @@ function calcOwner(ctx: Ctx): { lines: OwnerLine[]; total: number } {
   const bills = input.bills[obj.id] || {};
   const lines: OwnerLine[] = [];
   for (const s of input.services) {
+    if (!onObject(s, obj)) continue;
     const bill = bills[s.id];
     if (s.kind === 'owner') {
       if (bill !== undefined) lines.push({ serviceId: s.id, label: s.name, amount: round2(bill) });

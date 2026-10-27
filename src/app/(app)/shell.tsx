@@ -13,12 +13,12 @@ type Group = { id: string; label: string; icon: React.ElementType; match: string
 const STATIC: Omit<Group, 'items'>[] = [
   { id: 'obj', label: 'Объекты', icon: Building2, match: ['/objects'] },
   { id: 'bills', label: 'Счета', icon: FileText, match: ['/bills', '/report'] },
-  { id: 'refs', label: 'Справочники', icon: LibraryBig, match: ['/tariffs', '/requisites'] },
+  { id: 'refs', label: 'Справочники', icon: LibraryBig, match: ['/requisites'] },
   { id: 'rep', label: 'Отчёты', icon: ChartColumn, match: ['/reports'] },
 ];
 const ITEMS: Record<string, Item[]> = {
   bills: [{ href: '/bills', label: 'К выставлению', exact: true }, { href: '/bills/issued', label: 'Выставленные' }],
-  refs: [{ href: '/tariffs', label: 'Тарифы и услуги' }, { href: '/requisites', label: 'Реквизиты' }],
+  refs: [{ href: '/requisites', label: 'Реквизиты' }],
   rep: [
     { href: '/reports/payments', label: 'Оплаты поставщикам' },
     { href: '/reports/months', label: 'Итоги по месяцам' },

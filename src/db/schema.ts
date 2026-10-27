@@ -85,10 +85,14 @@ export const tenants = pgTable('tenants', {
   createdAt: createdAt(),
 }, (t) => [index('tenants_object_idx').on(t.objectId)]);
 
-/** Услуга: одна строка квитанции поставщика. */
+/** Услуга = квитанция объекта: одна строка квитанции поставщика и как её делить (тарифы). */
 export const services = pgTable('services', {
   id: id(),
   accountId: uuid('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  /** Объект квитанции. Пусто — старая услуга аккаунта (после миграции 0007 таких нет). */
+  objectId: uuid('object_id').references(() => objects.id, { onDelete: 'cascade' }),
+  /** Вид квитанции: el, cw, hw, dr, heat, uk, trash… (src/lib/receipts.ts); '' — свой. */
+  category: text('category').notNull().default(''),
   supplier: text('supplier').notNull(),
   name: text('name').notNull(),
   unit: text('unit').notNull(),
@@ -96,13 +100,31 @@ export const services = pgTable('services', {
   /** Порядок в счёте (стрелки ↑ ↓). */
   sort: integer('sort').notNull().default(0),
   createdAt: createdAt(),
-}, (t) => [index('services_account_idx').on(t.accountId)]);
+}, (t) => [index('services_account_idx').on(t.accountId), index('services_object_idx').on(t.objectId)]);
+
+/** Счётчик объекта: общий на объект или арендатора. Показания пока хранятся по арендатору и квитанции (readings). */
+export const meters = pgTable('meters', {
+  id: id(),
+  objectId: uuid('object_id').notNull().references(() => objects.id, { onDelete: 'cascade' }),
+  /** Чей счётчик; пусто — общий на объект. */
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+  /** Ресурс: el, cw, hw, heat, gas, other. */
+  resource: text('resource').notNull(),
+  number: text('number').notNull().default(''),
+  place: text('place').notNull().default(''),
+  /** Двухтарифный (день / ночь). */
+  dayNight: boolean('day_night').notNull().default(false),
+  /** Поверка до. */
+  verifyUntil: date('verify_until'),
+  sort: integer('sort').notNull().default(0),
+  createdAt: createdAt(),
+}, (t) => [index('meters_object_idx').on(t.objectId)]);
 
 /** Тариф услуги: логика, цены, для кого и с какой даты. */
 export const tariffs = pgTable('tariffs', {
   id: id(),
   serviceId: uuid('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
-  logic: text('logic', { enum: ['share', 'split', 'meterRest', 'fixed', 'meter', 'dn', 'derived', 'norm', 'whole'] }).notNull(),
+  logic: text('logic', { enum: ['share', 'equal', 'split', 'meterRest', 'fixed', 'meter', 'dn', 'derived', 'norm', 'whole'] }).notNull(),
   price: numeric('price', { precision: 14, scale: 4 }),
   price2: numeric('price2', { precision: 14, scale: 4 }),
   norm: numeric('norm', { precision: 14, scale: 6 }),

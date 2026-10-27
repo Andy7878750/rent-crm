@@ -34,7 +34,7 @@ export async function loadServices(accountId: string): Promise<CalcService[]> {
   const trs = await db.select().from(schema.tariffs).where(inArray(schema.tariffs.serviceId, svcs.map((s) => s.id)));
   const links = trs.length ? await db.select().from(schema.tariffTenants).where(inArray(schema.tariffTenants.tariffId, trs.map((t) => t.id))) : [];
   return svcs.map((s) => ({
-    id: s.id, supplier: s.supplier, name: s.name, unit: s.unit, kind: s.kind,
+    id: s.id, objectId: s.objectId ?? undefined, category: s.category, supplier: s.supplier, name: s.name, unit: s.unit, kind: s.kind,
     tariffs: trs.filter((t) => t.serviceId === s.id).map((t): CalcTariff => ({
       logic: t.logic, price: num(t.price), price2: num(t.price2), norm: num(t.norm), normPrice: num(t.normPrice),
       extraName: t.extraName || undefined, sources: t.sources,
@@ -84,6 +84,24 @@ export async function loadMonthInput(accountId: string, month: string): Promise<
       })),
     },
   };
+}
+
+export type MeterRow = typeof schema.meters.$inferSelect;
+
+/** Счётчики объектов аккаунта. */
+export async function listMeters(accountId: string, objectId?: string): Promise<MeterRow[]> {
+  const objs = (await listObjects(accountId)).map((o) => o.id);
+  const ids = objectId ? objs.filter((id) => id === objectId) : objs;
+  if (!ids.length) return [];
+  return db.select().from(schema.meters).where(inArray(schema.meters.objectId, ids))
+    .orderBy(asc(schema.meters.sort), asc(schema.meters.createdAt));
+}
+
+/** Суммы квитанций объекта за месяц: { serviceId: руб. } — для «ждём квитанцию» (была в прошлом месяце). */
+export async function objectBillsOf(objectId: string, month: string): Promise<Record<string, number>> {
+  const rows = await db.select().from(schema.objectBills)
+    .where(and(eq(schema.objectBills.objectId, objectId), eq(schema.objectBills.month, month)));
+  return Object.fromEntries(rows.map((r) => [r.serviceId, Number(r.amount)]));
 }
 
 export type InvoiceSnapshot = {

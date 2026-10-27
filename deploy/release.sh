@@ -19,6 +19,11 @@ if [ -n "${SMTP_PASS:-}" ]; then
   if timeout 6 bash -c "</dev/tcp/$SMTP_HOST/${SMTP_PORT:-465}" 2>/dev/null; then echo "mail: $SMTP_HOST:${SMTP_PORT:-465} доступен, отправка от $SMTP_USER"
   else echo "mail: НЕТ соединения с $SMTP_HOST:${SMTP_PORT:-465} — хостинг может закрывать порт"; fi
 else echo "mail: SMTP_PASS не задан — письма не отправляются"; fi
+# Копия базы перед миграциями (хранятся 10 последних): /var/backups/rent-crm/*.sql.gz
+mkdir -p /var/backups/rent-crm && chmod 700 /var/backups/rent-crm
+if sudo -u postgres pg_dump rentcrm 2>/dev/null | gzip > "/var/backups/rent-crm/$(date +%Y%m%d-%H%M%S).sql.gz"; then echo "backup: ok"
+else echo "backup: НЕ УДАЛОСЬ — миграции всё равно применяются"; fi
+ls -1t /var/backups/rent-crm/*.sql.gz 2>/dev/null | tail -n +11 | xargs -r rm -f
 (cd "$REL" && sudo -u app --preserve-env=DATABASE_URL node scripts/migrate.mjs drizzle)
 ln -sfn "$REL" /opt/rent-crm/current
 systemctl restart rent-crm

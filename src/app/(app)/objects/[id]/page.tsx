@@ -44,7 +44,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<'/o
   const meterFields: MeterField[] = [];
   if (tenant && bill) {
     for (const s of input.services) {
-      const tr = activeTariff(s, tenant.id, month, obj.isOwner);
+      const tr = activeTariff(s, tenant.id, month);
       if (!tr || s.kind === 'owner') continue;
       if (tr.logic === 'share' || tr.logic === 'split' || tr.logic === 'meterRest') {
         billFields.push({ serviceId: s.id, supplier: s.supplier, name: s.name, value: input.bills[obj.id]?.[s.id] });

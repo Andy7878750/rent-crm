@@ -18,19 +18,12 @@ const UNITS = ['кВт·ч', 'м³', 'Гкал', '₽'];
 
 export function ServiceForm({ serviceId, initial, objects, others, defaultFrom, suppliers: suppliersIn }: { serviceId: string | null; initial: ServiceIn; objects: Obj[]; others: Svc[]; defaultFrom: string; suppliers: Array<{ value: string; removable: boolean }> }) {
   const [state, action, pending] = useActionState<ServiceFormState, FormData>(saveService.bind(null, serviceId), {});
-  // «Все арендаторы» = отмечены все арендаторы (без своих объектов-собственников, их отмечают отдельно).
-  const tenantIds = objects.filter((o) => !o.owner).flatMap((o) => o.tenants.map((t) => t.id));
-  const ownerIds = new Set(objects.filter((o) => o.owner).flatMap((o) => o.tenants.map((t) => t.id)));
+  // «Все» = отмечены все арендаторы и собственники своих объектов (и те, кого добавите позже).
+  const tenantIds = objects.flatMap((o) => o.tenants.map((t) => t.id));
   const [d, setD] = useState<ServiceIn>(() => ({
     ...initial,
-    tariffs: initial.tariffs.map((t) => (!t.whoAll && tenantIds.length > 0 && tenantIds.every((id) => t.who.includes(id))
-      ? { ...t, whoAll: true, who: t.who.filter((id) => ownerIds.has(id)) } : t)),
+    tariffs: initial.tariffs.map((t) => (!t.whoAll && tenantIds.length > 0 && tenantIds.every((id) => t.who.includes(id)) ? { ...t, whoAll: true, who: [] } : t)),
   }));
-  // В базу: «все» + отмеченный собственник = явный список всех арендаторов и собственника.
-  const submit: ServiceIn = {
-    ...d,
-    tariffs: d.tariffs.map((t) => (t.whoAll && t.who.length ? { ...t, whoAll: false, who: [...tenantIds, ...t.who] } : t)),
-  };
   const [suppliers, setSuppliers] = useState(() => (initial.supplier && !suppliersIn.some((x) => x.value === initial.supplier) ? [...suppliersIn, { value: initial.supplier, removable: false }] : suppliersIn));
   const [confirm, setConfirm] = useState<null | 'service' | number>(null);
   const e = state.errors ?? {};
@@ -50,7 +43,7 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom, 
 
   return (
     <form action={action} noValidate className="flex max-w-[860px] flex-col gap-4">
-      <input type="hidden" name="data" value={JSON.stringify(submit)} />
+      <input type="hidden" name="data" value={JSON.stringify(d)} />
       {e.form && <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-bad">{e.form}</p>}
 
       <section className="card overflow-hidden">
@@ -155,8 +148,8 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom, 
                   <div className="mb-1.5 text-[13px] text-ink-2">Для кого<Help k="tariff.who" /></div>
                   <label className="mb-2 flex cursor-pointer items-center gap-2">
                     <input type="checkbox" checked={t.whoAll} disabled={allTakenBy !== null || takenBy.size > 0 || tenantIds.length === 0}
-                      onChange={() => setT(i, { whoAll: !t.whoAll, who: t.who.filter((id) => ownerIds.has(id)) })} />
-                    <b className="font-semibold">Все арендаторы</b> <span className="hint">— и те, кого добавите позже. Свои объекты (собственник) отмечаются отдельно</span>
+                      onChange={() => setT(i, { whoAll: !t.whoAll, who: [] })} />
+                    <b className="font-semibold">Все</b> <span className="hint">— арендаторы и собственники своих объектов, и те, кого добавите позже</span>
                   </label>
                   <div className="flex flex-col gap-2.5 rounded-lg border border-line p-3">
                     {objects.filter((o) => o.tenants.length).map((o) => (
@@ -166,15 +159,12 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom, 
                           {o.tenants.map((tn) => {
                             const busy = allTakenBy ?? takenBy.get(tn.id);
                             const isBusy = busy !== undefined && busy !== null;
-                            const on = o.owner ? t.who.includes(tn.id) : t.whoAll || t.who.includes(tn.id);
+                            const on = t.whoAll || t.who.includes(tn.id);
+                            // Снятая галочка снимает «Все», отмеченные все — ставят «Все».
                             const toggle = () => {
-                              if (o.owner) return setT(i, { who: on ? t.who.filter((x) => x !== tn.id) : [...t.who, tn.id] });
-                              // Арендатор: снятая галочка снимает «Все», отмеченные все — ставят «Все».
-                              const picked = new Set(t.whoAll ? tenantIds : t.who.filter((x) => !ownerIds.has(x)));
+                              const picked = new Set(t.whoAll ? tenantIds : t.who);
                               if (on) picked.delete(tn.id); else picked.add(tn.id);
-                              const owners = t.who.filter((x) => ownerIds.has(x));
-                              const all = tenantIds.every((x) => picked.has(x));
-                              setT(i, all ? { whoAll: true, who: owners } : { whoAll: false, who: [...picked, ...owners] });
+                              setT(i, tenantIds.every((x) => picked.has(x)) ? { whoAll: true, who: [] } : { whoAll: false, who: [...picked] });
                             };
                             return (
                               <label key={tn.id} className={`flex items-center gap-2 ${isBusy && !on ? 'text-faint' : 'cursor-pointer'}`}>

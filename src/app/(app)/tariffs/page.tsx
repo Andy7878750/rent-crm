@@ -51,9 +51,8 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
     t.who.forEach((id) => { const x = tenantObj.get(id); if (x) byObj.set(x.obj, [...(byObj.get(x.obj) ?? []), x.name]); });
     return [...byObj.entries()].map(([o, ns]) => `${o}: ${ns.join(', ')}`).join(' · ') || 'никто не выбран';
   };
-  const ownerFilter = objects.find((o) => o.id === filter)?.isOwner ?? false;
-  const visible = services.filter((s) => filter === 'all' || (s.kind === 'owner' && !ownerFilter) ||
-    s.tariffs.some((t) => (t.who === 'all' && !ownerFilter) || (t.who !== 'all' && t.who.some((id) => tenantObj.get(id)?.objId === filter))));
+  const visible = services.filter((s) => filter === 'all' || s.kind === 'owner' ||
+    s.tariffs.some((t) => t.who === 'all' || t.who.some((id) => tenantObj.get(id)?.objId === filter)));
 
   const chip = (id: string, label: string) => (
     <Link key={id} href={id === 'all' ? '/tariffs' : `/tariffs?o=${id}`} aria-pressed={filter === id}
@@ -135,7 +134,7 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
                             : <span className="text-muted">тарифов нет</span>}
                         </td>
                         <td className={tc}>
-                          {!t ? '—' : s.kind === 'owner' ? <span className="text-muted">платит арендодатель</span> : who === null ? 'Все арендаторы' : who}
+                          {!t ? '—' : s.kind === 'owner' ? <span className="text-muted">платит арендодатель</span> : who === null ? 'Все' : who}
                         </td>
                         <td className={`${tc} whitespace-nowrap`}>
                           <span className={`tabular-nums ${/\d/.test(p) ? 'font-semibold' : 'text-muted'}`}>{p}</span> <span className="text-[12px] text-faint">{u}</span>

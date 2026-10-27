@@ -9,14 +9,11 @@ import type {
 import { fmtMoney, fmtPrice, fmtQty, round2, sumMoney } from './format.ts';
 
 /** Тариф услуги, действующий для арендатора в расчётном месяце (самый поздний по дате начала). */
-/**
- * Действующий тариф услуги для арендатора на месяц.
- * owner = true — это собственник своего объекта: «Все арендаторы» на него не распространяется, только явный выбор.
- */
-export function activeTariff(service: Service, tenantId: string, month: string, owner = false): Tariff | null {
+/** Действующий тариф услуги для арендатора (или собственника своего объекта) на месяц. «Все» — все без исключения. */
+export function activeTariff(service: Service, tenantId: string, month: string): Tariff | null {
   let best: Tariff | null = null;
   for (const t of service.tariffs) {
-    const forTenant = (t.who === 'all' && !owner) || (t.who !== 'all' && t.who.includes(tenantId));
+    const forTenant = t.who === 'all' || t.who.includes(tenantId);
     if (!forTenant || t.from.slice(0, 7) > month) continue;
     if (!best || t.from > best.from) best = t;
   }
@@ -54,7 +51,7 @@ function tenantUsage(ctx: Ctx, tenantId: string, service: Service, tariff: Tarif
 function mates(ctx: Ctx, service: Service, logic: Tariff['logic']): Array<[Tenant, Tariff]> {
   const out: Array<[Tenant, Tariff]> = [];
   for (const t of ctx.obj.tenants) {
-    const tr = activeTariff(service, t.id, ctx.input.month, !!ctx.obj.owner);
+    const tr = activeTariff(service, t.id, ctx.input.month);
     if (tr && tr.logic === logic) out.push([t, tr]);
   }
   return out;
@@ -78,7 +75,7 @@ function calcTenant(ctx: Ctx, tenant: Tenant): TenantBill {
   const pairs: Array<[Service, Tariff]> = [];
   for (const s of input.services) {
     if (s.kind === 'owner') continue;
-    const tr = activeTariff(s, tenant.id, input.month, !!obj.owner);
+    const tr = activeTariff(s, tenant.id, input.month);
     if (tr) pairs.push([s, tr]);
   }
 

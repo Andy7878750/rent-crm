@@ -61,7 +61,7 @@ export async function saveService(serviceId: string | null, _prev: ServiceFormSt
       errors[`t${i}.norm`] = 'Норматив и его цену заполняют вместе';
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t.validFrom ?? '')) errors[`t${i}.validFrom`] = 'Укажите дату начала';
-    if (data.kind !== 'owner' && !t.whoAll && !t.who?.length) errors[`t${i}.who`] = 'Выберите арендаторов или «Все»';
+    if (data.kind !== 'owner' && !t.whoAll && !t.who?.length) errors[`t${i}.who`] = 'Отметьте, для кого услуга, или «Все»';
     // У арендатора по услуге с одной даты — один тариф.
     const keys = t.whoAll || data.kind === 'owner' ? ['all'] : t.who;
     for (const k of keys) {

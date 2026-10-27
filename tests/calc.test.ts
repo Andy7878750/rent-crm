@@ -103,21 +103,23 @@ test('Сумма прописью', () => {
   assert.equal(rubWords(1001), 'Одна тысяча один рубль 00 копеек');
 });
 
-test('собственник своего объекта: «Все арендаторы» на него не действует, явно выбранная услуга — считается', () => {
-  const water = august2026.services.find((s) => s.tariffs.some((t) => t.logic === 'meter' && t.who === 'all'))!;
+test('собственник своего объекта: «Все» распространяется и на него, явно выбранная услуга тоже считается', () => {
+  const water = august2026.services.find((s) => s.id === 'vkcw')!; // Холодная вода, по счётчику, для всех, 61,96
   const input: MonthInput = {
     ...august2026,
     services: [
       ...august2026.services,
-      { ...water, id: 'own-el', name: 'Свет дома', tariffs: [{ ...water.tariffs.find((t) => t.who === 'all')!, who: ['me'], price: 6.5 }] },
+      { ...water, id: 'own-el', name: 'Свет дома', tariffs: [{ ...water.tariffs[0], who: ['me'], price: 6.5 }] },
     ],
     objects: [...august2026.objects, { id: 'home', name: 'Дом', owner: true, tenants: [{ id: 'me', name: 'Собственник', share: 100 }] }],
-    readings: { ...august2026.readings, me: { 'own-el': { prev: 100, cur: 140 } } },
+    readings: { ...august2026.readings, me: { 'own-el': { prev: 100, cur: 140 }, vkcw: { prev: 10, cur: 12 } } },
   };
   const r = calculateMonth(input);
-  assert.deepEqual(r.tenants.me.lines.map((l) => l.label), ['Свет дома']);
-  assert.equal(r.tenants.me.total, 260);
-  assert.equal(activeTariff(water, 'me', input.month, true), null);
+  assert.ok(activeTariff(water, 'me', input.month), '«Все» действует и для собственника');
+  assert.equal(amount2(r, 'me', 'Свет дома'), 260);
+  assert.equal(amount2(r, 'me', 'Холодная вода'), 123.92);
   // У арендаторов ничего не изменилось.
   assert.equal(r.tenants.t4.total, 8243.68);
 });
+
+const amount2 = (r: ReturnType<typeof calculateMonth>, tid: string, label: string) => r.tenants[tid].lines.find((l) => l.label === label)?.amount;

@@ -17,7 +17,7 @@ export default async function EditObjectPage({ params }: PageProps<'/objects/[id
     <>
       <h1 className="pr-11 text-[22px] font-bold">Изменить объект</h1>
       <ObjectForm archive={archiveObject.bind(null, o.id)} customTypes={customTypes} objectId={o.id} cancelHref={`/objects/${o.id}`} initial={{
-        type: o.type, typeLabel: o.typeLabel, short: o.short, address: o.address, floor: o.floor, ukName: o.ukName, ukPhone: o.ukPhone,
+        type: o.type, typeLabel: o.typeLabel, short: o.short, address: o.address, floor: o.floor, ukName: o.ukName, ukPhone: o.ukPhone, ukEmail: o.ukEmail,
         cabinetUrl: o.cabinetUrl, cabinetLogin: o.cabinetLogin, cabinetHint: o.cabinetHint, isOwner: o.isOwner,
         tenants: o.isOwner ? [] : o.tenants.map((t) => ({ id: t.id, name: t.name, share: String(Number(t.share)).replace('.', ','), phone: t.phone, email: t.email, contract: t.contract, contractEnd: t.contractEnd ?? '' })),
       }} />

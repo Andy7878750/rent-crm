@@ -27,6 +27,7 @@ export default async function ObjectInfoPage({ params }: PageProps<'/objects/[id
     ['Этаж', dash(o.floor)],
     ['УК / ТСЖ', dash(o.ukName)],
     ['Телефон УК / ТСЖ', o.ukPhone ? <a href={`tel:${o.ukPhone.replace(/[^\d+]/g, '')}`} className="hover:underline">{formatPhone(o.ukPhone)}</a> : '—'],
+    ['Почта УК / ТСЖ', o.ukEmail ? <a href={`mailto:${o.ukEmail}`} className="hover:underline">{o.ukEmail}</a> : '—'],
     ['Личный кабинет', o.cabinetUrl ? <a href={/^https?:\/\//.test(o.cabinetUrl) ? o.cabinetUrl : `https://${o.cabinetUrl}`} target="_blank" rel="noreferrer" className="break-all text-cta-ink hover:underline">{o.cabinetUrl}</a> : '—'],
     ['Логин', dash(o.cabinetLogin)],
     ['Подсказка к паролю', <Secret key="h" value={o.cabinetHint} />],

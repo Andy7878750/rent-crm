@@ -1,0 +1,1 @@
+ALTER TABLE "objects" ADD COLUMN "uk_email" text DEFAULT '' NOT NULL;

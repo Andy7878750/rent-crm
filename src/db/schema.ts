@@ -54,6 +54,8 @@ export const objects = pgTable('objects', {
   floor: text('floor').notNull().default(''),
   ukName: text('uk_name').notNull().default(''),
   ukPhone: text('uk_phone').notNull().default(''),
+  /** Почта УК / ТСЖ для связи (если нет личного кабинета). */
+  ukEmail: text('uk_email').notNull().default(''),
   cabinetUrl: text('cabinet_url').notNull().default(''),
   cabinetLogin: text('cabinet_login').notNull().default(''),
   /** Только подсказка к паролю, сам пароль не храним. */

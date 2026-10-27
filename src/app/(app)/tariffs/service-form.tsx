@@ -3,21 +3,35 @@
 import { CancelButton } from '../modal';
 import { DateInput } from '@/components/date-input';
 import { Help } from '@/components/help';
+import { Select } from '@/components/select';
 import { useActionState, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { KINDS, LOGICS, type LogicField } from '@/lib/calc/logics';
 import type { Logic, ServiceKind } from '@/lib/calc/types';
-import { deleteService, saveService, type ServiceFormState, type ServiceIn, type TariffIn } from './actions';
+import { addSupplier, deleteService, removeSupplier, saveService, type ServiceFormState, type ServiceIn, type TariffIn } from './actions';
 
-type Obj = { id: string; name: string; tenants: Array<{ id: string; name: string }> };
+type Obj = { id: string; name: string; owner: boolean; tenants: Array<{ id: string; name: string }> };
 type Svc = { id: string; supplier: string; name: string; unit: string };
 
 const blankTariff = (logic: Logic, validFrom: string): TariffIn => ({ logic, price: '', price2: '', norm: '', normPrice: '', extraName: '', sources: [], whoAll: true, who: [], validFrom });
 const UNITS = ['кВт·ч', 'м³', 'Гкал', '₽'];
 
-export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }: { serviceId: string | null; initial: ServiceIn; objects: Obj[]; others: Svc[]; defaultFrom: string }) {
+export function ServiceForm({ serviceId, initial, objects, others, defaultFrom, suppliers: suppliersIn }: { serviceId: string | null; initial: ServiceIn; objects: Obj[]; others: Svc[]; defaultFrom: string; suppliers: Array<{ value: string; removable: boolean }> }) {
   const [state, action, pending] = useActionState<ServiceFormState, FormData>(saveService.bind(null, serviceId), {});
-  const [d, setD] = useState<ServiceIn>(initial);
+  // «Все арендаторы» = отмечены все арендаторы (без своих объектов-собственников, их отмечают отдельно).
+  const tenantIds = objects.filter((o) => !o.owner).flatMap((o) => o.tenants.map((t) => t.id));
+  const ownerIds = new Set(objects.filter((o) => o.owner).flatMap((o) => o.tenants.map((t) => t.id)));
+  const [d, setD] = useState<ServiceIn>(() => ({
+    ...initial,
+    tariffs: initial.tariffs.map((t) => (!t.whoAll && tenantIds.length > 0 && tenantIds.every((id) => t.who.includes(id))
+      ? { ...t, whoAll: true, who: t.who.filter((id) => ownerIds.has(id)) } : t)),
+  }));
+  // В базу: «все» + отмеченный собственник = явный список всех арендаторов и собственника.
+  const submit: ServiceIn = {
+    ...d,
+    tariffs: d.tariffs.map((t) => (t.whoAll && t.who.length ? { ...t, whoAll: false, who: [...tenantIds, ...t.who] } : t)),
+  };
+  const [suppliers, setSuppliers] = useState(() => (initial.supplier && !suppliersIn.some((x) => x.value === initial.supplier) ? [...suppliersIn, { value: initial.supplier, removable: false }] : suppliersIn));
   const [confirm, setConfirm] = useState<null | 'service' | number>(null);
   const e = state.errors ?? {};
   const K = KINDS[d.kind];
@@ -36,20 +50,29 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
 
   return (
     <form action={action} noValidate className="flex max-w-[860px] flex-col gap-4">
-      <input type="hidden" name="data" value={JSON.stringify(d)} />
+      <input type="hidden" name="data" value={JSON.stringify(submit)} />
       {e.form && <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-bad">{e.form}</p>}
 
       <section className="card overflow-hidden">
         <div className="border-b border-line bg-[#f6f8fb] px-4 py-2.5 eyebrow">Услуга</div>
         <div className="grid gap-3.5 p-4 sm:grid-cols-[1fr_1fr_140px]">
-          <label className="label"><span>Поставщик <span className="text-[#b4362b]">*</span><Help k="service.supplier" /></span>
-            <span className={`field ${e.supplier ? 'field-err' : ''}`}><input value={d.supplier} onChange={(ev) => setD({ ...d, supplier: ev.target.value })} placeholder="Водоканал" list="suppliers" /></span>{err('supplier')}</label>
+          <div className="label"><span>Поставщик <span className="text-[#b4362b]">*</span><Help k="service.supplier" /></span>
+            <Select value={d.supplier} onChange={(v) => setD({ ...d, supplier: v })}
+              options={suppliers.map((x) => ({ value: x.value, label: x.value, removable: x.removable }))}
+              create={{ placeholder: 'свой поставщик…', onCreate: (label) => {
+                const same = suppliers.find((x) => x.value.toLowerCase() === label.toLowerCase());
+                if (same) return same.value;
+                setSuppliers([...suppliers, { value: label, removable: true }]);
+                void addSupplier(label);
+                return label;
+              } }}
+              onRemove={(v) => { setSuppliers(suppliers.filter((x) => x.value !== v)); if (d.supplier === v) setD({ ...d, supplier: '' }); void removeSupplier(v); }} />
+            {err('supplier')}</div>
           <label className="label"><span>Название <span className="text-[#b4362b]">*</span><Help k="service.name" /></span>
             <span className={`field ${e.name ? 'field-err' : ''}`}><input value={d.name} onChange={(ev) => setD({ ...d, name: ev.target.value })} placeholder="Холодная вода" /></span>{err('name')}</label>
           <label className="label"><span>Единица <span className="text-[#b4362b]">*</span><Help k="service.unit" /></span>
             <span className={`field ${e.unit ? 'field-err' : ''}`}><input value={d.unit} onChange={(ev) => setD({ ...d, unit: ev.target.value })} list="units" /></span>{err('unit')}</label>
           <datalist id="units">{UNITS.map((u) => <option key={u} value={u} />)}</datalist>
-          <datalist id="suppliers">{[...new Set(others.map((o) => o.supplier))].map((s) => <option key={s} value={s} />)}</datalist>
         </div>
         <div className="px-4 pb-4">
           <div className="mb-1.5 text-[13px] text-ink-2">Счёт<Help k="service.kind" /></div>
@@ -131,33 +154,40 @@ export function ServiceForm({ serviceId, initial, objects, others, defaultFrom }
                 <div>
                   <div className="mb-1.5 text-[13px] text-ink-2">Для кого<Help k="tariff.who" /></div>
                   <label className="mb-2 flex cursor-pointer items-center gap-2">
-                    <input type="checkbox" checked={t.whoAll} disabled={allTakenBy !== null || takenBy.size > 0}
-                      onChange={() => setT(i, { whoAll: !t.whoAll, who: [] })} />
-                    <b className="font-semibold">Все арендаторы</b> <span className="hint">— и те, кого добавите позже (свои объекты-собственники — только если отметить их отдельно)</span>
+                    <input type="checkbox" checked={t.whoAll} disabled={allTakenBy !== null || takenBy.size > 0 || tenantIds.length === 0}
+                      onChange={() => setT(i, { whoAll: !t.whoAll, who: t.who.filter((id) => ownerIds.has(id)) })} />
+                    <b className="font-semibold">Все арендаторы</b> <span className="hint">— и те, кого добавите позже. Свои объекты (собственник) отмечаются отдельно</span>
                   </label>
-                  {!t.whoAll && (
-                    <div className="flex flex-col gap-2.5 rounded-lg border border-line p-3">
-                      {objects.filter((o) => o.tenants.length).map((o) => (
-                        <div key={o.id}>
-                          <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">{o.name}</div>
-                          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-                            {o.tenants.map((tn) => {
-                              const busy = allTakenBy ?? takenBy.get(tn.id);
-                              const on = t.who.includes(tn.id);
-                              return (
-                                <label key={tn.id} className={`flex items-center gap-2 ${busy !== undefined && busy !== null ? 'text-faint' : 'cursor-pointer'}`}>
-                                  <input type="checkbox" checked={on} disabled={busy !== undefined && busy !== null && !on}
-                                    onChange={() => setT(i, { who: on ? t.who.filter((x) => x !== tn.id) : [...t.who, tn.id] })} />
-                                  {tn.name}{busy !== undefined && busy !== null && !on && <span className="text-[12px]">(в тарифе №{(busy as number) + 1})</span>}
-                                </label>
-                              );
-                            })}
-                          </div>
+                  <div className="flex flex-col gap-2.5 rounded-lg border border-line p-3">
+                    {objects.filter((o) => o.tenants.length).map((o) => (
+                      <div key={o.id}>
+                        <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">{o.name}{o.owner && <span className="ml-1.5 font-normal normal-case tracking-normal">· свой объект</span>}</div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                          {o.tenants.map((tn) => {
+                            const busy = allTakenBy ?? takenBy.get(tn.id);
+                            const isBusy = busy !== undefined && busy !== null;
+                            const on = o.owner ? t.who.includes(tn.id) : t.whoAll || t.who.includes(tn.id);
+                            const toggle = () => {
+                              if (o.owner) return setT(i, { who: on ? t.who.filter((x) => x !== tn.id) : [...t.who, tn.id] });
+                              // Арендатор: снятая галочка снимает «Все», отмеченные все — ставят «Все».
+                              const picked = new Set(t.whoAll ? tenantIds : t.who.filter((x) => !ownerIds.has(x)));
+                              if (on) picked.delete(tn.id); else picked.add(tn.id);
+                              const owners = t.who.filter((x) => ownerIds.has(x));
+                              const all = tenantIds.every((x) => picked.has(x));
+                              setT(i, all ? { whoAll: true, who: owners } : { whoAll: false, who: [...picked, ...owners] });
+                            };
+                            return (
+                              <label key={tn.id} className={`flex items-center gap-2 ${isBusy && !on ? 'text-faint' : 'cursor-pointer'}`}>
+                                <input type="checkbox" checked={on} disabled={isBusy && !on} onChange={toggle} />
+                                {tn.name}{isBusy && !on && <span className="text-[12px]">(в тарифе №{(busy as number) + 1})</span>}
+                              </label>
+                            );
+                          })}
                         </div>
-                      ))}
-                      {objects.every((o) => !o.tenants.length) && <span className="hint">Арендаторов пока нет.</span>}
-                    </div>
-                  )}
+                      </div>
+                    ))}
+                    {objects.every((o) => !o.tenants.length) && <span className="hint">Арендаторов пока нет.</span>}
+                  </div>
                   {err(`t${i}.who`)}
                 </div>
               )}

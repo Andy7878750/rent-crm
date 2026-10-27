@@ -11,7 +11,7 @@ import { addObjectType, removeObjectType, saveObject, type ObjectFormState } fro
 
 export type ObjectFormValues = {
   type: 'nonres' | 'flat' | 'other'; typeLabel: string; short: string; address: string; floor: string;
-  ukName: string; ukPhone: string; cabinetUrl: string; cabinetLogin: string; cabinetHint: string; isOwner: boolean;
+  ukName: string; ukPhone: string; ukEmail: string; cabinetUrl: string; cabinetLogin: string; cabinetHint: string; isOwner: boolean;
   tenants: Array<{ id?: string; name: string; share: string; phone: string; email: string; contract: string; contractEnd: string }>;
 };
 
@@ -73,11 +73,14 @@ export function ObjectForm({ objectId, initial, cancelHref, customTypes = [], ar
             {input('address', <>Адрес<Help k="object.address" /></>, initial.address)}
             {input('floor', <>Этаж<Help k="object.floor" /></>, initial.floor)}
           </div>
+          <div className="grid gap-3.5 sm:col-span-2 sm:grid-cols-3">
           {input('ukName', <>УК / ТСЖ<Help k="object.ukName" /></>, initial.ukName, { placeholder: 'Название управляющей компании' })}
           <label className="label"><span>Телефон УК / ТСЖ<Help k="object.ukPhone" /></span>
             <span className="field"><input name="ukPhone" type="tel" inputMode="tel" autoComplete="off" placeholder="+7 (___) ___-__-__ или +код страны"
               value={ukPhone} onChange={(ev) => setUkPhone(formatPhone(ev.target.value, ukPhone))} /></span>
           </label>
+          {input('ukEmail', <>Почта УК / ТСЖ<Help k="object.ukEmail" /></>, initial.ukEmail, { type: 'email', placeholder: 'name@mail.ru' })}
+          </div>
           <div className="grid gap-3.5 sm:col-span-2 sm:grid-cols-3">
             {input('cabinetUrl', <>Личный кабинет (ссылка)<Help k="object.cabinetUrl" /></>, initial.cabinetUrl, { placeholder: 'https://' })}
             {input('cabinetLogin', <>Логин<Help k="object.cabinetLogin" /></>, initial.cabinetLogin)}

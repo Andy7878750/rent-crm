@@ -7,13 +7,13 @@ export const metadata = { title: 'Новая услуга' };
 
 export default async function NewServicePage() {
   const user = await requireUser();
-  const { objects, others } = await formData(user.accountId);
+  const { objects, others, suppliers } = await formData(user.accountId);
   const from = `${defaultMonth()}-01`;
   return (
     <>
       <h1 className="text-[22px] font-bold">Новая услуга</h1>
-      <ServiceForm defaultFrom={`${defaultMonth()}-01`} serviceId={null} objects={objects} others={others} initial={{
-        supplier: '', name: '', unit: '', kind: 'indiv',
+      <ServiceForm suppliers={suppliers} defaultFrom={`${defaultMonth()}-01`} serviceId={null} objects={objects} others={others} initial={{
+        supplier: 'Управляющая компания', name: '', unit: '', kind: 'indiv',
         tariffs: [{ logic: 'meter', price: '', price2: '', norm: '', normPrice: '', extraName: '', sources: [], whoAll: true, who: [], validFrom: from }],
       }} />
     </>

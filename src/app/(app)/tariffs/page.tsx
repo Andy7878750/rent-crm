@@ -81,12 +81,15 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
       )}
 
       {visible.length > 0 && (
-        /* Таблица: текст влево, цены и даты вправо моноширинным; зебра; шапка и «Услуга» закреплены при прокрутке. */
+        /* Таблица: всё по левому краю, фиксированные ширины столбцов; зебра; шапка и «Услуга» закреплены при прокрутке. */
         <div className="card max-h-[calc(100vh-230px)] overflow-auto shadow-card">
-          <table className="w-full min-w-[900px] border-separate border-spacing-0 text-left text-[13px]">
+          <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0 text-left text-[13px]">
+            <colgroup>
+              <col className="w-[78px]" /><col className="w-[22%]" /><col className="w-[14%]" /><col className="w-[17%]" /><col className="w-[21%]" /><col className="w-[14%]" /><col className="w-[11%]" /><col className="w-[52px]" />
+            </colgroup>
             <thead>
               <tr className="text-[12px] text-muted">
-                {[['№', 'w-[78px]'], ['Услуга', 'sticky left-0 z-20 min-w-[200px]'], ['Счёт', ''], ['Логика расчёта', ''], ['Для кого', ''], ['Цена', 'text-right pr-1'], ['', 'pl-0 w-[110px]'], ['С даты', 'text-right'], ['', 'w-[52px]']].map(([h, c], k) => (
+                {[['№', ''], ['Услуга', 'sticky left-0 z-20'], ['Счёт', ''], ['Логика расчёта', ''], ['Для кого', ''], ['Цена', ''], ['С даты', ''], ['', '']].map(([h, c], k) => (
                   <th key={k} className={`sticky top-0 z-10 border-b border-line bg-[#f6f8fb] px-3 py-2.5 font-semibold ${c}`}>{h}</th>
                 ))}
               </tr>
@@ -134,10 +137,10 @@ export default async function TariffsPage({ searchParams }: PageProps<'/tariffs'
                         <td className={tc}>
                           {!t ? '—' : s.kind === 'owner' ? <span className="text-muted">платит арендодатель</span> : who === null ? 'Все арендаторы' : who}
                         </td>
-                        {/* Число отдельно от единицы — так разряды цен стоят ровно друг под другом. */}
-                        <td className={`${tc} whitespace-nowrap pr-1 text-right tabular-nums ${/\d/.test(p) ? 'font-semibold' : 'text-muted'}`}>{p}</td>
-                        <td className={`${tc} whitespace-nowrap pl-0 text-[12px] text-faint`}>{u}</td>
-                        <td className={`${tc} whitespace-nowrap text-right tabular-nums text-muted`}>{t ? date(t.from) : '—'}</td>
+                        <td className={`${tc} whitespace-nowrap`}>
+                          <span className={`tabular-nums ${/\d/.test(p) ? 'font-semibold' : 'text-muted'}`}>{p}</span> <span className="text-[12px] text-faint">{u}</span>
+                        </td>
+                        <td className={`${tc} whitespace-nowrap tabular-nums text-muted`}>{t ? date(t.from) : '—'}</td>
                         {i === 0 && (
                           <td rowSpan={span} className={`${cell} py-2`}>
                             <Link href={`/tariffs/${s.id}`} aria-label={`Изменить услугу ${s.supplier} — ${s.name}`} title="Изменить"

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireUser } from '@/lib/auth/session';
+import { readAccountList, writeAccountList } from '@/lib/data';
 import { KINDS, LOGICS } from '@/lib/calc/logics';
 import type { Logic, ServiceKind } from '@/lib/calc/types';
 
@@ -132,4 +133,20 @@ export async function swapServices(a: string, b: string) {
     for (const [i, id] of ids.entries()) await tx.update(schema.services).set({ sort: i }).where(eq(schema.services.id, id));
   });
   revalidatePath('/', 'layout');
+}
+
+/** Добавить своего поставщика в выпадающий список (сразу, без сохранения услуги). */
+export async function addSupplier(label: string) {
+  const user = await requireUser();
+  const t = String(label ?? '').trim().replace(/\s+/g, ' ').slice(0, 80);
+  if (!t) return;
+  const list = await readAccountList(user.accountId, 'suppliers');
+  if (!list.some((x) => x.toLowerCase() === t.toLowerCase())) await writeAccountList(user.accountId, 'suppliers', [...list, t]);
+}
+
+/** Убрать своего поставщика из списка (услуги с ним не меняются). */
+export async function removeSupplier(label: string) {
+  const user = await requireUser();
+  const list = await readAccountList(user.accountId, 'suppliers');
+  if (list.includes(label)) await writeAccountList(user.accountId, 'suppliers', list.filter((x) => x !== label));
 }

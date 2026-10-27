@@ -132,3 +132,15 @@ export async function loadHelpTips(): Promise<Record<string, import('@/lib/help'
   }
   return out;
 }
+
+/** Свой список значений аккаунта в настройках (например, поставщики для выпадающего списка). */
+export async function readAccountList(accountId: string, key: 'suppliers'): Promise<string[]> {
+  const [acc] = await db.select({ settings: schema.accounts.settings }).from(schema.accounts).where(eq(schema.accounts.id, accountId)).limit(1);
+  const t = (acc?.settings as Record<string, unknown> | undefined)?.[key];
+  return Array.isArray(t) ? t.filter((x): x is string => typeof x === 'string') : [];
+}
+
+export async function writeAccountList(accountId: string, key: 'suppliers', list: string[]) {
+  const [acc] = await db.select({ settings: schema.accounts.settings }).from(schema.accounts).where(eq(schema.accounts.id, accountId)).limit(1);
+  await db.update(schema.accounts).set({ settings: { ...(acc?.settings ?? {}), [key]: list } }).where(eq(schema.accounts.id, accountId));
+}
